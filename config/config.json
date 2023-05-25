@@ -1,0 +1,9 @@
+{
+    "checkpoint_dir": "./config/sam_vit_h_4b8939.pth",
+    "graph_config": {
+        "modeBarButtonsToAdd": [
+        "drawrect",
+        "eraseshape"],
+        "displaylogo": false
+    }
+}

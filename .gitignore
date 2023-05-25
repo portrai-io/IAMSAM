@@ -1,0 +1,14 @@
+
+# For internal test
+config/*.pth
+
+# Jupyter, Python cache
+*.pyc
+__pycache__/
+*/__pycache__/*
+pages/__pycache__
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+profile_default/
+ipython_config.py
+

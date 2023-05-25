@@ -1,0 +1,20 @@
+,model,organism,description
+0,Immune_All_Low.pkl,human,immune sub-populations combined from 20 tissues of 18 studies
+1,Immune_All_High.pkl,human,immune populations combined from 20 tissues of 18 studies
+2,Adult_Mouse_Gut.pkl,mouse,cell types in the adult mouse gut combined from eight datasets
+3,Autopsy_COVID19_Lung.pkl,human,cell types from the lungs of 16 SARS-CoV-2 infected COVID-19 autopsy adult donors
+4,COVID19_HumanChallenge_Blood.pkl,human,detailed blood cell states from 16 individuals after being challenged with SARS-CoV-2
+5,COVID19_Immune_Landscape.pkl,human,immune subtypes from lung and blood of COVID-19 patients and healthy controls
+6,Cells_Fetal_Lung.pkl,human,cell types from human embryonic and fetal lungs
+7,Cells_Intestinal_Tract.pkl,human,"intestinal cells from fetal, pediatric (healthy and Crohn's disease) and adult human gut"
+8,Cells_Lung_Airway.pkl,human,cell populations from scRNA-seq of five locations of the human lungs and airways
+9,Developing_Human_Brain.pkl,human,cell types from the first-trimester developing human brain
+10,Developing_Human_Thymus.pkl,human,"cell populations in embryonic, fetal, pediatric, and adult stages of the human thymus"
+11,Developing_Mouse_Brain.pkl,mouse,cell types from the embryonic mouse brain between gastrulation and birth
+12,Healthy_COVID19_PBMC.pkl,human,peripheral blood mononuclear cell types from healthy and COVID-19 individuals
+13,Human_IPF_Lung.pkl,human,"cell types from idiopathic pulmonary fibrosis, chronic obstructive pulmonary disease, and healthy lungs of adult humans"
+14,Human_Lung_Atlas.pkl,human,integrated Human Lung Cell Atlas (HLCA) combining 46 datasets of the human respiratory system
+15,Human_PF_Lung.pkl,human,cell types from different forms of pulmonary fibrosis lungs of adult humans
+16,Lethal_COVID19_Lung.pkl,human,cell types from the lungs of individuals who died of COVID-19 and control individuals
+17,Nuclei_Lung_Airway.pkl,human,cell populations from snRNA-seq of five locations of the human lungs and airways
+18,Pan_Fetal_Human.pkl,human,stromal and immune populations from the human fetus

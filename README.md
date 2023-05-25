@@ -1,11 +1,29 @@
-
-# **IAMSAM**
-
 <img src="/assets/logo.png"  height="90">
 
-IAMSAM(Image-based Analysis of Molecular signatures using the Segment-Anything Model) is a user-friendly web-based tool designed to analyze spatial transcriptomics data. It utilizes the Segment-anything algorithm to segment H&E images of Visium data and performs statistical analysis to identify differentially expressed genes (DEGs) and their corresponding Gene Ontology (GO) terms for each segmented region.
 
-With its simple and accessible interface, IAMSAM makes it easy for researchers to analyze and interpret their spatial transcriptomics data.
+# Image-based Analysis of Molecular signatures using the Segment-Anything Model
+
+[![GitHub license](https://img.shields.io/github/license/portrai-io/IAMSAM)](https://github.com/portrai-io/IAMSAM/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/portrai-io/IAMSAM)](https://github.com/portrai-io/IAMSAM/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/portrai-io/IAMSAM)](https://github.com/portrai-io/IAMSAM/issues)
+[![GitHub contributors](https://img.shields.io/github/contributors/portrai-io/IAMSAM)](https://github.com/portrai-io/IAMSAM/graphs/contributors)
+
+
+IAMSAM is a user-friendly web-based tool designed to analyze ST data. This repository contains the code and resources necessary to utilize the functionalities of IAMSAM.
+
+
+## Features
+IAMSAM utilizes the [Segment-Anything Model](https://github.com/facebookresearch/segment-anything) for H&E image segmentation, which allows for morphological guidance in selecting ROIs for users. IAMSAM offers users with two modes for running the SAM algorithm: everything-mode and prompt-mode.
+
+- **Everything-mode** : An automatic mode that generates masks for the entire image, providing a comprehensive analysis of the spatial gene expression patterns.
+
+- **Prompt-mode** : An interactive mode that allows users to guide the segmentation process by providing box prompts.
+
+IAMSAM automatically performs downstream analysis, such as identifying differentially expressed genes, enrichment analysis, and cell type prediction within the selected regions.
+
+<img src="/assets/ui_example.png" width = 600>
+
+
 
 ## Requirements
 
@@ -16,7 +34,9 @@ With its simple and accessible interface, IAMSAM makes it easy for researchers t
 - Scanpy
 - dash
 
-IAMSAM follows the dependency of 'Segment-anything', which means that it requires the installation of both PyTorch and TorchVision with CUDA support.
+IAMSAM follows the dependency of **Segment-anything**, which means that it requires the installation of both PyTorch and TorchVision with CUDA support.
+
+To use SAM, you need to download the **ViT-H SAM model file** (`sam_vit_h_4b8939.pth`) from [here](https://github.com/facebookresearch/segment-anything#model-checkpoints) and then place it in the `config` folder.
 
 ## Installation
 This is the installation guide for the IAMSAM tool. Follow the steps below to install the tool:
@@ -26,10 +46,6 @@ This is the installation guide for the IAMSAM tool. Follow the steps below to in
     conda activate IAMSAM
     pip install -r requirements.txt
     
-## User interface
-<img src="/assets/ui_example.png" width = 720>
-
-
 ## Usage
 
 1. Start the dash server using the following command:
@@ -39,11 +55,9 @@ This is the installation guide for the IAMSAM tool. Follow the steps below to in
     ```
     
 2. Open your web browser and go to **`http://localhost:9905`**.
-3. Select your Visium data.
+3. Place your ST data in `data` folder. Please refer to this [guide](https://github.com/portrai-io/IAMSAM/data/rule.md)
 4. Click the "Run SAM" button to do segmentation of H&E image.
 5. Click the "Run ST analysis" button to perform DEG analysis and GO term enrichment analysis.
-
-
 
 ## Demo Data
 
@@ -59,4 +73,9 @@ The following table provides information about the datasets that were demonstrat
 | Mouse_Brain_FL        | 10X Genomics Dataset      | [Link](https://www.10xgenomics.com/resources/datasets/adult-mouse-brain-section-1-coronal-stains-dapi-anti-neu-n-1-standard-1-1-0)           |
 
 These datasets were used to demonstrate the capabilities of IAMSAM in our paper. You can access and download the datasets using the provided links.
+
+
+## Contact
+For any questions or inquiries, please contact us at [contact@portrai.io](mailto:contact@portrai.io).
+
 

@@ -1,15 +1,12 @@
-<img src="/assets/logo.png"  height="90">
-
-
-# Image-based Analysis of Molecular signatures using the Segment-Anything Model
+# <img src="/assets/logo.png"  height="90">
+ 
 
 [![GitHub license](https://img.shields.io/github/license/portrai-io/IAMSAM)](https://github.com/portrai-io/IAMSAM/blob/main/LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/portrai-io/IAMSAM)](https://github.com/portrai-io/IAMSAM/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/portrai-io/IAMSAM)](https://github.com/portrai-io/IAMSAM/issues)
 [![GitHub contributors](https://img.shields.io/github/contributors/portrai-io/IAMSAM)](https://github.com/portrai-io/IAMSAM/graphs/contributors)
 
-
-IAMSAM is a user-friendly web-based tool designed to analyze ST data. This repository contains the code and resources necessary to utilize the functionalities of IAMSAM.
+IAMSAM (Image-based Analysis of Molecular signatures using the Segment-Anything Model) is a user-friendly web-based tool designed to analyze ST data. This repository contains the code and resources necessary to utilize the functionalities of IAMSAM.
 
 
 ## Features
@@ -19,9 +16,14 @@ IAMSAM utilizes the [Segment-Anything Model](https://github.com/facebookresearch
 
 - **Prompt-mode** : An interactive mode that allows users to guide the segmentation process by providing box prompts.
 
-IAMSAM automatically performs downstream analysis, such as identifying differentially expressed genes, enrichment analysis, and cell type prediction within the selected regions.
+After selecting ROIs, IAMSAM automatically performs downstream analysis including identification of differentially expressed genes, enrichment analysis, and cell type prediction within the selected regions.
 
-<img src="/assets/ui_example.png" width = 600>
+
+## User interface
+<img src="/assets/ui_example.png" width = 800>
+
+
+
 
 
 
@@ -60,8 +62,6 @@ This is the installation guide for the IAMSAM tool. Follow the steps below to in
 5. Click the "Run ST analysis" button to perform DEG analysis and GO term enrichment analysis.
 
 ## Demo Data
-
-The following table provides information about the datasets that were demonstrated in our paper.
 
 | Sample Name           | Repository                | Download Link                                                                                       |
 |-----------------------|---------------------------|-----------------------------------------------------------------------------------------------------|

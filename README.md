@@ -6,7 +6,7 @@
 [![GitHub issues](https://img.shields.io/github/issues/portrai-io/IAMSAM)](https://github.com/portrai-io/IAMSAM/issues)
 [![GitHub contributors](https://img.shields.io/github/contributors/portrai-io/IAMSAM)](https://github.com/portrai-io/IAMSAM/graphs/contributors)
 
-IAMSAM (Image-based Analysis of Molecular signatures using the Segment-Anything Model) is a user-friendly web-based tool designed to analyze ST data. This repository contains the code and resources necessary to utilize the functionalities of IAMSAM.
+IAMSAM (Image-based Analysis of Molecular signatures using the Segment-Anything Model) is a user-friendly web-based tool designed to analyze ST data. This repository contains the code and resources to utilize the functionalities of IAMSAM described in [our paper](https://doi.org/10.1101/2023.05.25.542052).
 
 
 ## Features
@@ -73,6 +73,9 @@ This is the installation guide for the IAMSAM tool. Follow the steps below to in
 | Mouse_Brain_FL        | 10X Genomics Dataset      | [Link](https://www.10xgenomics.com/resources/datasets/adult-mouse-brain-section-1-coronal-stains-dapi-anti-neu-n-1-standard-1-1-0)           |
 
 These datasets were used to demonstrate the capabilities of IAMSAM in our paper. You can access and download the datasets using the provided links.
+
+## Citation
+If you find IAMSAM helpful for your work, consider citing [our paper](https://doi.org/10.1101/2023.05.25.542052)
 
 
 ## Contact

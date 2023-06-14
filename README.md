@@ -18,12 +18,8 @@ IAMSAM utilizes the [Segment-Anything Model](https://github.com/facebookresearch
 
 After selecting ROIs, IAMSAM automatically performs downstream analysis including identification of differentially expressed genes, enrichment analysis, and cell type prediction within the selected regions.
 
-
-## User interface
-<img src="/assets/ui_example.png" width = 800>
-
-
-
+## Tutorial Video
+[![Tutorial Video](/assets/title.png)](https://youtu.be/ri1OB4W210Q)
 
 
 
@@ -48,9 +44,6 @@ This is the installation guide for the IAMSAM tool. Follow the steps below to in
     conda activate IAMSAM
     pip install -r requirements.txt
     
-    
-## Tutorial Video
-![Tutorial Video](http://img.youtube.com/vi/ri1OB4W210Q/0.jpg)](https://youtu.be/ri1OB4W210Q)
 
 
 ## Usage

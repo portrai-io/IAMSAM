@@ -48,6 +48,11 @@ This is the installation guide for the IAMSAM tool. Follow the steps below to in
     conda activate IAMSAM
     pip install -r requirements.txt
     
+    
+## Tutorial Video
+![Tutorial Video](http://img.youtube.com/vi/ri1OB4W210Q/0.jpg)](https://youtu.be/ri1OB4W210Q)
+
+
 ## Usage
 
 1. Start the dash server using the following command:

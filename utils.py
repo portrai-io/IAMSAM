@@ -89,7 +89,7 @@ def get_header(app):
                     dbc.Row(
                         [dbc.Col(
                             html.A(
-                                    href = "https://github.com/portrai-io/portraiSAM",
+                                    href = "https://github.com/portrai-io/IAMSAM",
                                     target="_blank",
                                     rel="noopener",
                                     children = [
@@ -112,21 +112,20 @@ def get_header(app):
                     style={
                         'height' : '100px'
                     }),
-                    html.Br(),
-                    html.Br(),
                     html.Div(
                         [
                             html.H5("About this app"),
                             html.P([
-                                "We, as the In Silico Team in ",
-                                html.A("Portrai, Inc.", href = "https://portrai.io/"), 
-                                " created an Image-Augmented Molecular mapping using ",
-                                html.A("Segment Anything Model", href = "https://github.com/facebookresearch/segment-anything"),
-                                " (IAMSAM). The model is licensed under the Apache 2.0 license, following the original SAM regulations. If you have some questions for us, please contact with ",
+                                "IAMSAM (Image-based Analysis of Molecular signatures using the Segment-Anything Model) is a user-friendly web-based tool designed to analyze ST(Spatial Transcriptomics) data. To fully utilize the functionalities of IAMSAM, please refer to the resources below. If you have any questions, please contact with ",
                                 html.A("contact@portrai.io", href = "mailto:contact@portrai.io")
-                            ])
-                        ],
+                            ]),
+                            html.Ul([
+                                html.Li([html.A('Our paper', href = "https://www.biorxiv.org/content/10.1101/2023.05.25.542052v1")]),
+                                html.Li([html.A('Github Repo', href = "https://github.com/portrai-io/IAMSAM")]),
+                                html.Li([html.A('Tutorial video', href = "https://youtu.be/ri1OB4W210Q")])
+                            ])] 
                 ),
+        html.Hr(),
         html.Div(
             [
                 dbc.Offcanvas([
@@ -153,16 +152,18 @@ def get_menu():
                 dbc.Nav([
                         dbc.NavLink(
                             "Everything-mode",
-                            href="/IAMSAM/main",
-                            className="nav-item",
+                            href="/",
+                            active= "exact",
+                            className="nav-item nav-link",
                         ),
                         dbc.NavLink(
                             "Prompt-mode",
-                            href="/IAMSAM/prompt",
-                            className="nav-item",
+                            href="/prompt",
+                            active ="exact",
+                            className="nav-item nav-link",
                         ),
-                        ],
-                    className="nav nav-tabs",
+                        ], pills=True,
+                    className="nav nav-pills",
                     style = {
                         'font-size' : 'x-large',
                         'font-weight' : 'bold'

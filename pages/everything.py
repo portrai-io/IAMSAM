@@ -64,7 +64,7 @@ def create_layout(app, flists, config):
                             html.Div(
                                 dcc.Loading(id="ls-loading-2", 
                                             children=[
-                                                dcc.Graph(id='he_image', # 이 부분은 이미지가 호출되는 부분
+                                                dcc.Graph(id='he_image', 
                                                           figure=initial_img('assets/he_default.jpg'),
                                                           config = config['graph_config'],        
                                                           style={
@@ -126,8 +126,8 @@ def create_layout(app, flists, config):
                             html.Div(
                                 [dbc.Button(
                                     color='primary',
-                                    id='run_sam', # 동주님, 홍윤님 다름
-                                    n_clicks=0, # 초기값에 불과함
+                                    id='run_sam',
+                                    n_clicks=0, 
                                     class_name="btn btn-lg btn-primary",
                                     children='Run SAM',
                                     style={

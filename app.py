@@ -54,7 +54,7 @@ app.layout = html.Div(
 @app.callback(Output("page-content", "children"), 
               [Input("url", "pathname")])
 def display_page(pathname):
-    if pathname == "/IAMSAM/prompt":
+    if pathname == "/prompt":
         return prompt.create_layout(app, flists, config)
     else:
         return everything.create_layout(app, flists, config),

@@ -51,10 +51,10 @@ This is the installation guide for the IAMSAM tool. Follow the steps below to in
 1. Start the dash server using the following command:
     
     ```
-    CUDA_VISIBLE_DEVICES={GPU_to_use} python app.py --port {port}
+    python app.py --port {port_to_use}
     ```
     
-2. Open your web browser and go to **`http://localhost:9905`**.
+2. Open your web browser and go to **`http://localhost:{port}`**.
 3. Place your ST data in `data` folder. Please refer to this [guide](https://github.com/portrai-io/IAMSAM/blob/main/data/rule.md)
 4. Click the "Run SAM" button to do segmentation of H&E image.
 5. Click the "Run ST analysis" button to perform DEG analysis and GO term enrichment analysis.

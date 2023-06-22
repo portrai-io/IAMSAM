@@ -21,7 +21,7 @@ After selecting ROIs, IAMSAM automatically performs downstream analysis includin
 ## Tutorial Video
 [![Tutorial Video](/assets/title.png)](https://youtu.be/ri1OB4W210Q)
 
-
+You can try IAMSAM in our [demo page](https://iamsam.portrai.io). If you want to apply IAMSAM to your own data, please follow the instructions below.
 
 ## Requirements
 

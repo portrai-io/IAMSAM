@@ -122,7 +122,7 @@ def create_layout(app, flists, config):
                             className="d-grid gap-2"),   
                             html.Br(),
                             html.Div(id = 'overlay_dropdown'),
-                            # newly added (24.04.24)
+                            
                             dbc.Row([
                                 dbc.Col([
                                     html.Label("Select values for ROI 1:"),
@@ -150,7 +150,6 @@ def create_layout(app, flists, config):
                             ),
                             html.Hr(),
 
-                            # newly added (24.04.25)
                             html.Br(),
                             dbc.Container([
                                 html.H4("Mask Size Modulator"),

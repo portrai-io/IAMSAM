@@ -81,7 +81,6 @@ def load_he_image(tissue_dir, reset):
     
     return fig, [''], reset+1
 
-# newly modified (24.04.24)
 @app.callback(
     Output("he_image", "figure", allow_duplicate=True),
     Output('overlay_dropdown', 'options'),    
@@ -112,7 +111,6 @@ def run_sam_in_everything_mode(n_clicks, alpha, pred_iou_thresh):
     return fig, mask_names
 
 
-# newly updated (24.04.24)
 @app.callback(
     Output("he_image","figure", allow_duplicate=True),
     Input('overlay_dropdown1', 'value'),
@@ -196,7 +194,7 @@ def run_downstream_analysis(n_clicks, selected, selected1, selected2, lfc, padj,
                 print("Error in celltypist")
                 fig_celltype = blank_fig()
                 msg = 'Error occured'
-        # newly added (24.04.23)
+        
         else:
             In_df = ps.extract_degs2(selected1, selected2, padj_cutoff = padj, lfc_cutoff = lfc)
             msg = 'Analysis Done.'
@@ -230,7 +228,6 @@ def run_downstream_analysis(n_clicks, selected, selected1, selected2, lfc, padj,
         return fig_volcano, fig_box, fig_enrich, fig_celltype, msg
 
 
-# newly updated (24.04.23)
 @app.callback(
     Output('overlay_dropdown', 'value', allow_duplicate=True),
     Output('overlay_dropdown1', 'value', allow_duplicate=True),
@@ -295,7 +292,6 @@ def display_relayout_data(relayoutData, pathname):
         raise PreventUpdate
 
 
-# newly modified (24.04.23)
 @app.callback(
     Output("he_image", "figure", allow_duplicate=True),
     Output('overlay_dropdown', 'value', allow_duplicate=True),
@@ -438,7 +434,6 @@ def export_deg_table(n_clicks):
         print("Prevent update")
         raise PreventUpdate
 
-# newly modified (24.04.23)
 
 from dash.dependencies import Input, Output
 

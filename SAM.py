@@ -223,7 +223,6 @@ class IAMSAM():
         return self.In_df
 
 
-    # newly added (24.04.23)
     def extract_degs2(self, selected1, selected2, padj_cutoff, lfc_cutoff):
         
         # Add selected masks for ROI1 and ROI2

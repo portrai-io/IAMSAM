@@ -81,7 +81,6 @@ def load_he_image(tissue_dir, reset):
     
     return fig, [''], reset+1
 
-
 @app.callback(
     Output("he_image", "figure", allow_duplicate=True),
     Output('overlay_dropdown', 'options'),    
@@ -107,13 +106,14 @@ def run_sam_in_everything_mode(n_clicks, alpha, pred_iou_thresh):
     fig.update_traces(
         customdata = masks_int,
         hovertemplate="MaskNumber: %{customdata}<extra></extra>")
+    
     mask_names = list(range(1, len(masks)+1))
     return fig, mask_names
 
 
 @app.callback(
     Output("he_image","figure", allow_duplicate=True),
-    Input('overlay_dropdown', 'value'),
+    Input('overlay_dropdown1', 'value'),
     Input("alpha-state", "value"),
     prevent_initial_call=True,
  )
@@ -150,6 +150,8 @@ def update_selected_mask(selected, alpha):
     Output("msg", "children", allow_duplicate = True),
     Input('run_deg', 'n_clicks'),
     State('overlay_dropdown', 'value'),
+    State('overlay_dropdown1', 'value'),
+    State('overlay_dropdown2', 'value'),
     State('lfc_cutoff', 'value'),
     State('pval_cutoff', 'value'),
     State('geneset', 'value'),
@@ -157,43 +159,79 @@ def update_selected_mask(selected, alpha):
     State("organism-radio", 'value'),
     prevent_initial_call=True
 )
-def run_downstream_analysis(n_clicks, selected, lfc, padj, geneset, model, organism):
-    if selected is None or '' in selected :
+def run_downstream_analysis(n_clicks, selected, selected1, selected2, lfc, padj, geneset, model, organism):
+    degmode = 'one' if (selected2 is None or '' in selected2) else 'two'
+
+    if selected1 is None or '' in selected1:
         raise PreventUpdate
-        
+ 
     if len(ps.masks) > 0:
-        In_df = ps.extract_degs(selected, padj_cutoff = padj, lfc_cutoff = lfc)
+        if degmode == 'one':
         
-        msg = 'Analysis Done.'
-        try:
-            fig_volcano = plot_volcano(In_df)
-            fig_box = plot_box(In_df, ps.adata)
+            In_df = ps.extract_degs(selected1, padj_cutoff = padj, lfc_cutoff = lfc)
+            
+            msg = 'Analysis Done.'
+            try:
+                fig_volcano = plot_volcano(In_df)
+                fig_box = plot_box(In_df, ps.adata)
+            
+            except:
+                print("Error in DEG")
+                fig_volcano = blank_fig()
+                fig_box = blank_fig()
+                msg = 'Error occurred'
+            
+            try: 
+                fig_enrich = do_enrichment_analysis(In_df, geneset, organism)
+            except:
+                print("Error in enrichr")
+                fig_enrich = blank_fig()
+                msg = 'Error occured'
+            
+            try:
+                fig_celltype = do_celltypist(model, ps.adata, organism)
+            except:
+                print("Error in celltypist")
+                fig_celltype = blank_fig()
+                msg = 'Error occured'
         
-        except:
-            print("Error in DEG")
-            fig_volcano = blank_fig()
-            fig_box = blank_fig()
-            msg = 'Error occurred'
-        
-        try: 
-            fig_enrich = do_enrichment_analysis(In_df, geneset, organism)
-        except:
-            print("Error in enrichr")
-            fig_enrich = blank_fig()
-            msg = 'Error occured'
-        
-        try:
-            fig_celltype = do_celltypist(model, ps.adata, organism)
-        except:
-            print("Error in celltypist")
-            fig_celltype = blank_fig()
-            msg = 'Error occured'
+        else:
+            In_df = ps.extract_degs2(selected1, selected2, padj_cutoff = padj, lfc_cutoff = lfc)
+            msg = 'Analysis Done.'
+            mask_filter = ps.adata.obs['mask_in'] != 'Out'
+            filtered_adata = ps.adata[mask_filter, :]
+            
+            try:
+                fig_volcano = plot_volcano(In_df)
+                fig_box = plot_box2(In_df, filtered_adata)
+            
+            except:
+                print("Error in DEG")
+                fig_volcano = blank_fig()
+                fig_box = blank_fig()
+                msg = 'Error occurred'
+            
+            try: 
+                fig_enrich = do_enrichment_analysis(In_df, geneset, organism)
+            except:
+                print("Error in enrichr")
+                fig_enrich = blank_fig()
+                msg = 'Error occured'
+            
+            try:
+                fig_celltype = do_celltypist2(model, filtered_adata, organism)
+            except:
+                print("Error in celltypist")
+                fig_celltype = blank_fig()
+                msg = 'Error occured'
         
         return fig_volcano, fig_box, fig_enrich, fig_celltype, msg
 
 
 @app.callback(
     Output('overlay_dropdown', 'value', allow_duplicate=True),
+    Output('overlay_dropdown1', 'value', allow_duplicate=True),
+    Output('overlay_dropdown1', 'options', allow_duplicate=True),
     Input('hover_click', 'n_clicks'),
     State('he_image', 'hoverData'),
     State('overlay_dropdown', 'value'),
@@ -216,8 +254,9 @@ def display_click_data(n_clicks, fig, selected, pathname):
             selected.append(idx)
         elif idx in selected:
             selected.remove(idx)
-            
-        return selected
+
+        options = [{'label': f"Mask {i}", 'value': i} for i in selected]
+        return selected, selected, options
 
 
 @app.callback(
@@ -256,6 +295,8 @@ def display_relayout_data(relayoutData, pathname):
 @app.callback(
     Output("he_image", "figure", allow_duplicate=True),
     Output('overlay_dropdown', 'value', allow_duplicate=True),
+    Output('overlay_dropdown1', 'value', allow_duplicate=True),
+    Output('overlay_dropdown1', 'options', allow_duplicate=True),
     Input('run_sam_prompt', 'n_clicks'),
     State("alpha-state", "value"),
     prevent_initial_call=True,
@@ -268,6 +309,7 @@ def run_sam_in_prompt_mode(n_clicks, alpha):
         raise PreventUpdate
         
     masks = ps.get_mask_prompt_mode()
+    
     masks_int = ps.integrated_masks
     
     selected = [x for x in range(len(masks))]
@@ -283,7 +325,10 @@ def run_sam_in_prompt_mode(n_clicks, alpha):
     fig.update_traces(
         customdata = masks_int,
         hovertemplate="MaskNumber: %{customdata}<extra></extra>")
-    return fig, selected
+
+    options = [{'label': f"Mask {i}", 'value': i} for i in selected]
+    
+    return fig, selected, selected, options
 
 
 @app.callback(
@@ -388,6 +433,59 @@ def export_deg_table(n_clicks):
     except:
         print("Prevent update")
         raise PreventUpdate
+
+
+from dash.dependencies import Input, Output
+
+@app.callback(
+    [Output('overlay_dropdown1', 'options'),
+     Output('overlay_dropdown2', 'options')],
+    [Input('overlay_dropdown', 'value'),
+     Input('overlay_dropdown1', 'value'),
+     Input('overlay_dropdown2', 'value')]
+)
+def update_dropdown_options(master_values, selected1, selected2):
+    all_options = [{'label': str(i), 'value': i} for i in range(len(ps.masks))]
+    
+    if not master_values:
+        return [], []
+
+    options1 = [option for option in all_options if option['value'] not in (selected2 or [])]
+    options2 = [option for option in all_options if option['value'] not in (selected1 or [])]
+    
+    return options1, options2
+
+
+@app.callback(
+    Output('overlay_dropdown1', 'options', allow_duplicate=True),
+    Output('overlay_dropdown1', 'value', allow_duplicate=True),
+    Input('mask-size-slider', 'value'),
+    State('overlay_dropdown1', 'value'),
+    prevent_initial_call=True
+)
+def update_masks_on_resize(scale_factor, selected):
+    resized_masks = []
+    kernel_size = int(scale_factor * 50)  # Kernel size proportional to the scale factor
+    kernel = np.ones((kernel_size, kernel_size), np.uint8)
+    
+    for mask in ps.masks:
+        if scale_factor > 1:
+            # Apply dilation
+            resized_mask = cv2.dilate(mask, kernel, iterations=1)
+        else:
+            # Apply erosion
+            resized_mask = cv2.erode(mask, kernel, iterations=1)
+        
+        resized_masks.append(resized_mask)
+    
+    ps.masks = resized_masks  # Update global mask list
+    
+    # Update dropdown options to reflect current masks
+    options = [{'label': f"Mask {i + 1}", 'value': i + 1} for i in range(len(resized_masks))]
+    
+    # Ensure selected values are still valid
+    selected = [s for s in selected if s <= len(resized_masks)]
+    return options, selected
 
 
 if __name__ == '__main__':

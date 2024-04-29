@@ -37,8 +37,8 @@ class IAMSAM():
         # Load Anndata
         self.adata = sc.read_visium(tissue_dir) 
         self.adata.var_names_make_unique()
-        sc.pp.filter_cells(self.adata, min_genes = 200)
-        sc.pp.filter_genes(self.adata, min_counts = 200)
+        #sc.pp.filter_cells(self.adata, min_genes = 200)
+        #sc.pp.filter_genes(self.adata, min_counts = 200)
         sc.pp.normalize_total(self.adata,target_sum=1e4, inplace=True)
         sc.pp.log1p(self.adata)
         print("Anndata prepared.")
@@ -74,9 +74,14 @@ class IAMSAM():
         self.yrange_ = [round(self.yrange[0]-self.pad), round(self.yrange[1]+self.pad)]
 
         #update image
+        if self.xrange_[0] < 0:
+            self.xrange_[0] = 0
+        if self.yrange_[0] < 0:
+            self.yrange_[0] = 0
+        
         self.tsimg_rgb_ = self.tsimg_rgb[self.yrange_[0]:self.yrange_[1], self.xrange_[0]:self.xrange_[1]]
         self.tsimg_bgr_ = self.tsimg_bgr[self.yrange_[0]:self.yrange_[1], self.xrange_[0]:self.xrange_[1]]
-        
+
         print("Image Loaded.")
         #plt.imshow(self.tsimg_bgr_)
         print('X range : {} ~ {} '.format(self.xrange[0], self.xrange[1]))
@@ -90,6 +95,7 @@ class IAMSAM():
     def get_mask_prompt_mode(self):
 
         input_boxes = torch.tensor(self.boxes, device=self.predictor.device)
+        
         transformed_boxes = self.predictor.transform.apply_boxes_torch(input_boxes, self.tsimg_rgb_.shape[:2])
         
         masks, _, _ = self.predictor.predict_torch(
@@ -133,6 +139,7 @@ class IAMSAM():
                         )
         sam_result = mask_generator_2.generate(self.tsimg_rgb_)
         masks_ = [mask['segmentation'] for mask in sam_result] # cropped size masks
+        
         n_total_masks = len(masks_)
         
         # Get original size masks
@@ -148,7 +155,7 @@ class IAMSAM():
             iiy = round(self.on_tissue.iloc[idx,:]['imgrow_'])
             iix = round(self.on_tissue.iloc[idx,:]['imgcol_'])
             tissue_mask[iiy, iix] = 1
-        
+            
         # filtering out sam_result values that are not on the tissue 
         on_tissue_sam_result = []
         for idx, m in enumerate(masks):
@@ -212,5 +219,49 @@ class IAMSAM():
         self.In_df.loc[(self.In_df.pvals_adj < float(padj_cutoff)) & (abs(self.In_df.logfoldchanges) > float(lfc_cutoff)), 'DE'] = True
             
         print("Extract DEGs")
+        
+        return self.In_df
+
+
+    def extract_degs2(self, selected1, selected2, padj_cutoff, lfc_cutoff):
+        
+        # Add selected masks for ROI1 and ROI2
+        selmask1 = np.zeros((self.tsimg_rgb.shape[0], self.tsimg_rgb.shape[1]))
+        for idx in selected1:
+            selmask1 += self.masks[int(idx)]  # Assuming self.masks[0] is for ROI1
+        selmask1 = np.array(selmask1 > 0)
+    
+        selmask2 = np.zeros((self.tsimg_rgb.shape[0], self.tsimg_rgb.shape[1]))
+        for idx in selected2:
+            selmask2 += self.masks[int(idx)]  # Assuming self.masks[1] is for ROI2
+        selmask2 = np.array(selmask2 > 0)
+    
+        mask_in1 = []
+        mask_in2 = []
+        for idx in range(self.imcoord.shape[0]):
+            iiy = round(self.imcoord.iloc[idx, :]['imgrow_'])
+            iix = round(self.imcoord.iloc[idx, :]['imgcol_'])
+            mask_in1.append(selmask1[iiy, iix])
+            mask_in2.append(selmask2[iiy, iix])
+    
+        # Assign group labels 'ROI1' or 'ROI2'
+        self.imcoord['mask_in'] = ['ROI1' if in1 else 'ROI2' if in2 else 'Out' for in1, in2 in zip(mask_in1, mask_in2)]
+    
+        # Update the adata.obs with new labels
+        self.adata.obs['mask_in'] = self.imcoord.set_index('barcodes').loc[self.adata.obs.index, 'mask_in']
+        
+        mask_filter = self.adata.obs['mask_in'] != 'Out'
+        filtered_adata = self.adata[mask_filter, :]
+        
+        # Perform DEG analysis only on filtered data
+        sc.tl.rank_genes_groups(filtered_adata, 'mask_in', method='wilcoxon', key_added='DEG')
+        self.In_df = sc.get.rank_genes_groups_df(filtered_adata, group='ROI1', key='DEG')
+        self.In_df['-log10Padj'] = -np.log10(self.In_df['pvals_adj'])
+    
+        # Define differential expression based on user-defined thresholds
+        self.In_df['DE'] = False
+        self.In_df.loc[(self.In_df.pvals_adj < float(padj_cutoff)) & (abs(self.In_df.logfoldchanges) > float(lfc_cutoff)), 'DE'] = True
+    
+        print("Extracted DEGs between ROI1 and ROI2")
         
         return self.In_df

@@ -54,8 +54,8 @@ def create_layout(app, flists, config):
                                                  'float' : 'center',
                                                  'margin-left': '10%',
                                                  'margin-right': '10%',},
-                                    )], width = 2
-                                )
+                                    ),
+                                ], width = 2)
                             ]),
                             html.Br(),
                             html.H4('Visium H&E image'),
@@ -97,8 +97,9 @@ def create_layout(app, flists, config):
                             html.Div(
                                 html.P(id = 'box')
                             ),                                                
-                            
-                            html.Div(id = 'overlay_dropdown'),
+
+                            #html.Div(id = 'overlay_dropdown'),
+
                             html.Div(
                                 [dbc.Button(
                                     color='primary',
@@ -120,6 +121,20 @@ def create_layout(app, flists, config):
                             )],  
                             className="d-grid gap-2"),   
                             html.Br(),
+                            html.Div(id = 'overlay_dropdown'),
+                            
+                            dbc.Row([
+                                dbc.Col([
+                                    html.Label("Select values for ROI 1:"),
+                                    dcc.Dropdown(id="overlay_dropdown1", multi=True),
+                                ]),
+                                dbc.Col([
+                                    html.Label("Select values for ROI 2: (Optional)"),
+                                    dcc.Dropdown(id="overlay_dropdown2", multi=True),
+                                ])
+                            ]),
+                            html.Br(),
+                            
                             html.Hr(),
                             html.P('Mask opacity'),
                             dcc.Slider(
@@ -134,6 +149,24 @@ def create_layout(app, flists, config):
                                     },
                             ),
                             html.Hr(),
+
+                            html.Br(),
+                            dbc.Container([
+                                html.H4("Mask Size Modulator"),
+                                html.P("Use the slider to adjust the size of the masks."),
+                                dcc.Slider(
+                                    id='mask-size-slider',
+                                    min=0.5,  # Minimum size factor
+                                    max=3.0,  # Maximum size factor
+                                    step=0.1,  # Increment step
+                                    value=1.0,  # Default value
+                                    marks={i: f'{i}x' for i in [0.5, 1.0, 1.5, 2.0, 2.5, 3.0]},
+                                    tooltip={"placement": "bottom", "always_visible": True}
+                                ),
+                            ]),
+                            html.Br(),
+
+                            
                             html.H4('Downstream analysis'),
                             dbc.Row([
                                 dbc.Col([

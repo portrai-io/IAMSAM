@@ -275,7 +275,6 @@ def plot_box(In_df, adata, top_n = 10):
     
     return fig   
 
-# newly made (24.04.23)
 def plot_box2(In_df, adata, top_n = 10):
     top_gene = In_df[In_df['DE'] == True].sort_values('logfoldchanges', ascending=False)
     top_gene = top_gene.head(n=top_n).names
@@ -354,7 +353,6 @@ def do_celltypist(model, adata, sample_organism):
     return fig
 
 
-# newly added (24.04.23)
 def do_celltypist2(model, adata, sample_organism):
     
     celltypist.models.download_models()
@@ -378,8 +376,8 @@ def do_celltypist2(model, adata, sample_organism):
     prob_mat_in = prob_mat[prob_mat['mask_in'] == 'ROI1']
     cell_type_in = pd.DataFrame(prob_mat_in.sum(), columns = ['sum_prob']).reset_index()
     
-    cell_type_in['sum_prob'] = pd.to_numeric(cell_type_in['sum_prob'], errors='coerce') # newly added
-    cell_type_in = cell_type_in.dropna(subset=['sum_prob']) # newly added
+    cell_type_in['sum_prob'] = pd.to_numeric(cell_type_in['sum_prob'], errors='coerce') 
+    cell_type_in = cell_type_in.dropna(subset=['sum_prob']) 
     
     fig = px.pie(data_frame=cell_type_in.sort_values('sum_prob', ascending=False).head(n = 6), 
              names = "index", values='sum_prob')

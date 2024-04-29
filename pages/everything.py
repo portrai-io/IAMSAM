@@ -151,7 +151,6 @@ def create_layout(app, flists, config):
                             #    dcc.Dropdown(id="overlay_dropdown", multi=True)
                             #]),
 
-                            # newly modified (24.04.24)
                             html.Div(id = 'overlay_dropdown'),    
                             dbc.Row([
                                 dbc.Col([
@@ -180,7 +179,6 @@ def create_layout(app, flists, config):
                             html.Hr(),
 
 
-                            # newly added (24.04.25)
                             html.Br(),
                             dbc.Container([
                                 html.H4("Mask Size Modulator"),

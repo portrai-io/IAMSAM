@@ -1,5 +1,6 @@
 
 # For internal test
+data/*
 config/*.pth
 
 # Jupyter, Python cache

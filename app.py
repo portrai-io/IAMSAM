@@ -25,14 +25,22 @@ from utils import *
 # Load Configuration
 config = load_json('config/config.json')
 
+# # Load data from 'data' folder
+# data_files = os.listdir('data/')
+# data_files.sort()
+# flists = []
+# for sample in data_files:
+#     if check_sample_folder(os.path.join('data/', sample)):
+#         flists.append({'label' : sample, 'value' : 'data/{}'.format(sample)})
+
 # Load data from 'data' folder
 data_files = os.listdir('data/')
 data_files.sort()
-flists = []
-for sample in data_files:
-    if check_sample_folder(os.path.join('data/', sample)):
-        flists.append({'label' : sample, 'value' : 'data/{}'.format(sample)})
 
+flists = []
+for file in data_files:
+    if file.endswith('.h5ad'):
+        flists.append(os.path.join('data/', file))
     
 # App Layout
 app = Dash(__name__, 
@@ -352,6 +360,8 @@ def toggle_offcanvas(n1, is_open):
     return is_open
 
 
+
+###### Export function #####
 @app.callback(
     Output("download-barcode", "data"),
     Input("export-barcode", "n_clicks"),
@@ -370,7 +380,6 @@ def export_barcode_info(n_clicks):
         print("Prevent update")
         raise PreventUpdate
 
-
 @app.callback(
     Output("download-deg", "data"),
     Input("export-deg", "n_clicks"),
@@ -388,6 +397,11 @@ def export_deg_table(n_clicks):
     except:
         print("Prevent update")
         raise PreventUpdate
+
+
+
+
+
 
 
 if __name__ == '__main__':

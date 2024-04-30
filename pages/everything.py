@@ -104,7 +104,8 @@ def create_layout(app, flists, config):
                             html.H4('Segment-anything (Everything mode)'),
                             
                             # pred_iou_thresh
-                            html.P('IOU score threshold'),
+                            html.P('Mask confidence threshold', id = 'iou-slider-label'),
+                            dbc.Tooltip("Use the slider to adjust the IOU predicted score threshold", target="iou-slider-label"),
                             dcc.Slider(
                                     id="pred_iou_thresh",
                                     min=0.8, max=1, value=0.95, step=0.01, 
@@ -143,104 +144,111 @@ def create_layout(app, flists, config):
                                     class_name = "btn btn-secondary"
                                 )],
                             className="d-grid gap-2"),                                                
+                            html.Br(),
+
+                            ### Mask settings
+                            dbc.Accordion([
+                                dbc.AccordionItem([
+                                    dbc.Row([
+                                        dbc.Col([
+                                            html.P('Mask opacity'),
+                                            dcc.Slider(
+                                                    id="alpha-state", 
+                                                    min=0, 
+                                                    max=1, 
+                                                    value=0.6, 
+                                                    step=0.2,
+                                                    tooltip={
+                                                        'placement' : 'bottom',
+                                                        'always_visible':False
+                                                    },
+                                            )
+                                        ]),
+                                        dbc.Col([
+                                            html.P("Mask size modulator", id = "mask-modulator-label"),
+                                            dbc.Tooltip("Use the slider to adjust the size of the masks.", target="mask-modulator-label"),
+                                            dcc.Slider(
+                                                id='mask-size-slider',
+                                                min=0.5,  # Minimum size factor
+                                                max=1.5,  # Maximum size factor
+                                                step=0.25,  # Increment step
+                                                value=1.0,  # Default value
+                                                marks={i: f'{i}x' for i in [0.5, 1, 1.5]},
+                                                tooltip={"placement": "bottom", "always_visible": False}
+                                            )]
+                                        )]
+                                    )], title ='Mask settings'
+                                )], start_collapsed=True
+                            ),
                             html.Hr(),
                             
+                            # ROI selection
+                            
+                            dcc.Store(id = 'mask_list', storage_type = 'memory'),
                             html.H4('Region of Interest'),
-                            #html.P('Selected masks'),
-                            #dbc.Row([
-                            #    dcc.Dropdown(id="overlay_dropdown", multi=True)
-                            #]),
-
-                            html.Div(id = 'overlay_dropdown'),    
                             dbc.Row([
                                 dbc.Col([
-                                    html.Label("Select values for ROI 1:"),
-                                    dcc.Dropdown(id="overlay_dropdown1", multi=True)
+                                    html.P("ROI 1:"),
+                                    dcc.Dropdown(id="roi-1", multi=True)
                                 ]),
                                 dbc.Col([
-                                    html.Label("Select values for ROI 2: (Optional)"),
-                                    dcc.Dropdown(id="overlay_dropdown2", multi=True),
+                                    html.P("ROI 2: (Optional)", id = 'hover-text'),
+                                    dbc.Tooltip("If ROI 2 is empty: Compare ROI 1 vs Others DEG", target="hover-text"),
+                                    dcc.Dropdown(id="roi-2", multi=True),
                                 ])
                             ]),
                             html.Br(),
-                                                        
-                            html.P('Mask opacity'),
-                            dcc.Slider(
-                                    id="alpha-state", 
-                                    min=0, 
-                                    max=1, 
-                                    value=0.6, 
-                                    step=0.1, 
-                                    tooltip={
-                                        'placement' : 'bottom',
-                                        'always_visible':False
-                                    },
-                            ),
-                            html.Hr(),
 
-
-                            html.Br(),
-                            dbc.Container([
-                                html.H4("Mask Size Modulator"),
-                                html.P("Use the slider to adjust the size of the masks."),
-                                dcc.Slider(
-                                    id='mask-size-slider',
-                                    min=0.5,  # Minimum size factor
-                                    max=3.0,  # Maximum size factor
-                                    step=0.1,  # Increment step
-                                    value=1.0,  # Default value
-                                    marks={i: f'{i}x' for i in [0.5, 1.0, 1.5, 2.0, 2.5, 3.0]},
-                                    tooltip={"placement": "bottom", "always_visible": True}
-                                ),
-                            ]),
-                            html.Br(),
-
-
-                            html.H4('Downstream analysis'),
-                            dbc.Row([
-                                dbc.Col([
-                                    html.P('logFC cutoff'),
-                                    dbc.Select(
-                                        [0, 0.5, 1, 1.5, 2, 2.5, 3],
-                                        id="lfc_cutoff", 
-                                        value=1, 
-                                )
-                                ]),
-                                dbc.Col([
-                                    html.P('p-adj cutoff'),
-                                    dbc.Select(
-                                    [0.001, 0.01, 0.05, 0.1],
-                                    id="pval_cutoff",
-                                    value=0.05,
-                                    )
-                                ])
-                            ]),
-                            html.Br(),
-                            html.Div([
-                                html.P('Geneset for enrichment analysis'),
-                                dbc.Checklist(
-                                    id = 'geneset',
-                                    options = [
-                                        {'label' : 'GO_BP', 'value' : 'GO_Biological_Process_2018'}, 
-                                        {'label' : 'GO_CC', 'value' : 'GO_Cellular_Component_2018'}, 
-                                        {'label' : 'GO_MF', 'value' : 'GO_Molecular_Function_2018'},
-                                        {'label' : 'MSigDB', 'value' :'MSigDB_Hallmark_2020'},
-                                        {'label' : 'KEGG (Human)', 'value' : 'KEGG_2021_Human'}
-                                    ],
-                                    value = ['GO_Biological_Process_2018', 'GO_Cellular_Component_2018', 'GO_Molecular_Function_2018'],
-                                   inline = True
-                                )]
-                            ),
-                            html.Br(),
-                            html.Div([
-                                html.P('CellTypist Reference model'),
-                                dcc.Dropdown(
-                                        id="model_dropdown",
-                                        multi=False,
-                                        value = 'Immune_All_High.pkl',
-                                        options = pd.read_csv('assets/celltypist_models_description.csv')['model'].tolist()
-                                ),
-                            ]),
+                            ### Downstream analysis settings
+                            dbc.Accordion([
+                                dbc.AccordionItem([
+                                    dbc.Row([
+                                        dbc.Col([
+                                            html.P('Log Fold Change cutoff'),
+                                            dbc.Select(
+                                                [0, 0.5, 1, 1.5, 2, 2.5, 3],
+                                                id="lfc_cutoff", 
+                                                value=1, 
+                                        )
+                                        ]),
+                                        dbc.Col([
+                                            html.P('Adjusted P-value cutoff'),
+                                            dbc.Select(
+                                            [0.001, 0.01, 0.05, 0.1],
+                                            id="pval_cutoff",
+                                            value=0.05,
+                                            )
+                                        ])
+                                    ]),
+                                    html.Br(),
+                                    dbc.Row([
+                                        html.P('Geneset for enrichment analysis'),
+                                        dbc.Checklist(
+                                            id = 'geneset',
+                                            options = [
+                                                {'label' : 'GO_BP', 'value' : 'GO_Biological_Process_2018'}, 
+                                                {'label' : 'GO_CC', 'value' : 'GO_Cellular_Component_2018'}, 
+                                                {'label' : 'GO_MF', 'value' : 'GO_Molecular_Function_2018'},
+                                                {'label' : 'MSigDB', 'value' :'MSigDB_Hallmark_2020'},
+                                                {'label' : 'KEGG (Human)', 'value' : 'KEGG_2021_Human'}
+                                            ],
+                                            value = ['GO_Biological_Process_2018', 'GO_Cellular_Component_2018', 'GO_Molecular_Function_2018'],
+                                           inline = True
+                                        )
+                                    ]),
+                                    html.Br(),
+                                    dbc.Row([
+                                        html.P('CellTypist Reference model'),
+                                        dcc.Dropdown(
+                                                id="model_dropdown",
+                                                multi=False,
+                                                value = 'Immune_All_High.pkl',
+                                                options = pd.read_csv('assets/celltypist_models_description.csv')['model'].tolist()
+                                        )
+                                    ])
+                                ], title = 'Downstream analysis settings')
+                                ], start_collapsed=True         
+                            ),     
                             html.Br(),  # Run ST analysis
                             html.Div(
                                 [dbc.Button(

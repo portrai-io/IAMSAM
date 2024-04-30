@@ -30,7 +30,15 @@ class IAMSAM():
         self.sam = sam
         self.masks = []
         self.boxes = []
-        
+
+    def reset(self):
+        del self.adata
+        del self.tsimg_rgb, self.tsimg_bgr, self.tsimg_bgr_cropped, self.tsimg_rgb_cropped
+        del self.masks, self.mask_int
+        del self.boxes, self.xrange, self.yrange
+
+        self.__init__(chkp_path)
+    
     def load_visium(self, h5ad_dir):
 
         # Load Anndata
@@ -61,7 +69,6 @@ class IAMSAM():
         self.yrange = [np.min(self.adata.obs['imgrow_']), np.max(self.adata.obs['imgrow_'])] 
 
         pad = 0.5
-        #pad = (self.xrange[1]-self.xrange[0])/(np.max(self.adata.obs['array_col']) - np.min(self.adata.obs['array_col']))
         self.xrange_ = [round(self.xrange[0]-pad), round(self.xrange[1]+pad)]
         self.yrange_ = [round(self.yrange[0]-pad), round(self.yrange[1]+pad)]
 
@@ -70,7 +77,6 @@ class IAMSAM():
         self.tsimg_bgr_cropped = self.tsimg_bgr[self.yrange_[0]:self.yrange_[1], self.xrange_[0]:self.xrange_[1]]
         
         print("Image Loaded.")
-        #plt.imshow(self.tsimg_bgr_)
         print('X range : {} ~ {} '.format(self.xrange[0], self.xrange[1]))
         print('Y range : {} ~ {} '.format(self.yrange[0], self.yrange[1]))
 
@@ -98,10 +104,11 @@ class IAMSAM():
             mask_[self.yrange_[0]:self.yrange_[1], self.xrange_[0]:self.xrange_[1]] = mask[0].cpu().numpy()
             mask_list.append(mask_)
         self.masks = mask_list
+        self.masks_backup = mask_list
         
         masks_integrated = np.zeros((self.tsimg_rgb.shape[0], self.tsimg_rgb.shape[1]))
         for ii, mm in enumerate(self.masks):
-            masks_integrated[mm == 1] = ii + 1 # 1-based index    
+            masks_integrated[mm == 1] = ii # 0-based index    
         self.integrated_masks = masks_integrated
         return self.masks
     
@@ -159,6 +166,7 @@ class IAMSAM():
             mask[self.yrange_[0]:self.yrange_[1], self.xrange_[0]:self.xrange_[1]] = mask_
             masks.append(mask)
         self.masks = masks
+        self.masks_backup = masks
         
         mask_annotator = sv.MaskAnnotator()
         detections = sv.Detections.from_sam(on_tissue_sam_result)
@@ -172,78 +180,55 @@ class IAMSAM():
         for ii , mm in enumerate(self.masks):
             masks_integrated[mm == 1] = ii + 1 # 1-based index    
         self.integrated_masks = masks_integrated
+
+        
+        
         return self.masks
 
     
-    def extract_degs(self, selected, padj_cutoff, lfc_cutoff):
-        
-        # Add selected mask as 'In' in adata.obs
+    def extract_degs(self, selected1, selected2, padj_cutoff, lfc_cutoff):
+
+        # Add selected mask as 'ROI-1' in adata.obs
         selmask = np.zeros((self.tsimg_rgb.shape[0], self.tsimg_rgb.shape[1]))
-        for idx in selected:
+        for idx in selected1:
             selmask = selmask + self.masks[idx]
         selmask = np.array(selmask > 0)
 
-        mask_in = []
+        roi1 = []
         for idx in range(self.adata.n_obs):
             iiy = round(self.adata.obs.iloc[idx,:]['imgrow_'])
             iix = round(self.adata.obs.iloc[idx,:]['imgcol_'])
-            mask_in.append(selmask[iiy, iix])
-        
-        nameidx = ['Out', 'In']
-        self.adata.obs['mask_in'] = [nameidx[m] for m in mask_in] # To String 
+            roi1.append(selmask[iiy, iix])
+
+        # if ROI-2 exists then add ROI-2, else add others.
+        if not selected2:
+            selmask = np.zeros((self.tsimg_rgb.shape[0], self.tsimg_rgb.shape[1]))
+            for idx in selected2:
+                selmask = selmask + self.masks[idx]
+            selmask = np.array(selmask > 0)
+    
+            roi2 = []
+            for idx in range(self.adata.n_obs):
+                iiy = round(self.adata.obs.iloc[idx,:]['imgrow_'])
+                iix = round(self.adata.obs.iloc[idx,:]['imgcol_'])
+                roi2.append(selmask[iiy, iix])
+            
+        else:
+            roi2 = np.invert(roi1)
+            
+
+        self.adata.obs['ROIs'] = ['ROI1' if in1 else 'ROI2' if in2 else '' for in1, in2 in zip(roi1, roi2)]
         
         # Test DEG
-        sc.tl.rank_genes_groups(self.adata, 'mask_in', method='wilcoxon', key_added='DEG')
-        self.In_df = sc.get.rank_genes_groups_df(self.adata, group = 'In', key = 'DEG')
-        self.In_df['-log10Padj'] = -np.log10(self.In_df['pvals_adj'])
+        adata_roi = self.adata[np.isin(self.adata.obs['ROIs'], ['ROI1', 'ROI2']),:].copy()
+        sc.tl.rank_genes_groups(adata_roi, 'ROIs', method='wilcoxon', key_added='DEG')
+
+        # DEG_result
+        self.deg_df = sc.get.rank_genes_groups_df(adata_roi, group = None, key = 'DEG')
+        self.deg_df['-log10Padj'] = -np.log10(self.deg_df['pvals_adj'])
         
-        self.In_df['DE'] = False
-        self.In_df.loc[(self.In_df.pvals_adj < float(padj_cutoff)) & (abs(self.In_df.logfoldchanges) > float(lfc_cutoff)), 'DE'] = True
+        self.deg_df['DE'] = False
+        self.deg_df.loc[(self.deg_df.pvals_adj < float(padj_cutoff)) & (abs(self.deg_df.logfoldchanges) > float(lfc_cutoff)), 'DE'] = True
             
         print("Extract DEGs")
-        
-        return self.In_df
-
-
-    def extract_degs2(self, selected1, selected2, padj_cutoff, lfc_cutoff):
-        
-        # Add selected masks for ROI1 and ROI2
-        selmask1 = np.zeros((self.tsimg_rgb.shape[0], self.tsimg_rgb.shape[1]))
-        for idx in selected1:
-            selmask1 += self.masks[int(idx)]  # Assuming self.masks[0] is for ROI1
-        selmask1 = np.array(selmask1 > 0)
-    
-        selmask2 = np.zeros((self.tsimg_rgb.shape[0], self.tsimg_rgb.shape[1]))
-        for idx in selected2:
-            selmask2 += self.masks[int(idx)]  # Assuming self.masks[1] is for ROI2
-        selmask2 = np.array(selmask2 > 0)
-    
-        mask_in1 = []
-        mask_in2 = []
-        for idx in range(self.imcoord.shape[0]):
-            iiy = round(self.imcoord.iloc[idx, :]['imgrow_'])
-            iix = round(self.imcoord.iloc[idx, :]['imgcol_'])
-            mask_in1.append(selmask1[iiy, iix])
-            mask_in2.append(selmask2[iiy, iix])
-    
-        # Assign group labels 'ROI1' or 'ROI2'
-        self.imcoord['mask_in'] = ['ROI1' if in1 else 'ROI2' if in2 else 'Out' for in1, in2 in zip(mask_in1, mask_in2)]
-    
-        # Update the adata.obs with new labels
-        self.adata.obs['mask_in'] = self.imcoord.set_index('barcodes').loc[self.adata.obs.index, 'mask_in']
-        
-        mask_filter = self.adata.obs['mask_in'] != 'Out'
-        filtered_adata = self.adata[mask_filter, :]
-        
-        # Perform DEG analysis only on filtered data
-        sc.tl.rank_genes_groups(filtered_adata, 'mask_in', method='wilcoxon', key_added='DEG')
-        self.In_df = sc.get.rank_genes_groups_df(filtered_adata, group='ROI1', key='DEG')
-        self.In_df['-log10Padj'] = -np.log10(self.In_df['pvals_adj'])
-    
-        # Define differential expression based on user-defined thresholds
-        self.In_df['DE'] = False
-        self.In_df.loc[(self.In_df.pvals_adj < float(padj_cutoff)) & (abs(self.In_df.logfoldchanges) > float(lfc_cutoff)), 'DE'] = True
-    
-        print("Extracted DEGs between ROI1 and ROI2")
-        
-        return self.In_df
+        return self.deg_df

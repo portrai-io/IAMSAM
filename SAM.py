@@ -30,14 +30,6 @@ class IAMSAM():
         self.sam = sam
         self.masks = []
         self.boxes = []
-
-    def reset(self):
-        del self.adata
-        del self.tsimg_rgb, self.tsimg_bgr, self.tsimg_bgr_cropped, self.tsimg_rgb_cropped
-        del self.masks, self.mask_int
-        del self.boxes, self.xrange, self.yrange
-
-        self.__init__(chkp_path)
     
     def load_visium(self, h5ad_dir):
 
@@ -45,13 +37,10 @@ class IAMSAM():
         self.adata = sc.read_h5ad(h5ad_dir) 
         self.adata.var_names_make_unique()
 
-        # Basic QC
-        sc.pp.filter_genes(self.adata, min_counts = 5)
-        sc.pp.normalize_total(self.adata, inplace=True)
+        self.adata.X = self.adata.layers['counts']
+        sc.pp.normalize_total(self.adata, target_sum = 1e4)
         sc.pp.log1p(self.adata)
-        
-        print("Anndata prepared.")
-        
+       
         library_id = list(self.adata.uns['spatial'].keys())[0]
 
         # Tissue image(Before crop)
@@ -142,20 +131,19 @@ class IAMSAM():
             mask = np.zeros((self.tsimg_rgb.shape[0], self.tsimg_rgb.shape[1]))
             mask[self.yrange_[0]:self.yrange_[1], self.xrange_[0]:self.xrange_[1]] = mask_
             masks.append(mask) # original size
-        
+    
         # Set on_tissue mask 
+        pixels = np.column_stack((self.adata.obs['imgrow_'].values.astype(int), 
+                                  self.adata.obs['imgcol_'].values.astype(int)))
         tissue_mask = np.zeros((self.tsimg_rgb.shape[0], self.tsimg_rgb.shape[1]))
-        for idx in range(self.adata.n_obs):
-            iiy = round(self.adata.obs.iloc[idx,:]['imgrow_'])
-            iix = round(self.adata.obs.iloc[idx,:]['imgcol_'])
-            tissue_mask[iiy, iix] = 1
+        tissue_mask[pixels[:, 0], pixels[:, 1]] = 1
 
         # filtering out sam_result values that are not on the tissue 
         on_tissue_sam_result = []
         for idx, m in enumerate(masks):
-            prop = np.sum(cv2.bitwise_and(m, tissue_mask)) / np.sum(m) * 100
+            prop = np.sum(cv2.bitwise_and(m, tissue_mask)) / self.adata.n_obs
             
-            if prop > 0.01:
+            if prop > 0.001:
                 on_tissue_sam_result.append(sam_result[idx])
         on_tissue_masks = [mask['segmentation'] for mask in sorted(on_tissue_sam_result, key=lambda x: x['area'], reverse=True)]  # cropped size
         
@@ -224,11 +212,12 @@ class IAMSAM():
         sc.tl.rank_genes_groups(adata_roi, 'ROIs', method='wilcoxon', key_added='DEG')
 
         # DEG_result
-        self.deg_df = sc.get.rank_genes_groups_df(adata_roi, group = None, key = 'DEG')
+        self.deg_df = sc.get.rank_genes_groups_df(adata_roi, group = 'ROI1', key = 'DEG')
         self.deg_df['-log10Padj'] = -np.log10(self.deg_df['pvals_adj'])
         
-        self.deg_df['DE'] = False
-        self.deg_df.loc[(self.deg_df.pvals_adj < float(padj_cutoff)) & (abs(self.deg_df.logfoldchanges) > float(lfc_cutoff)), 'DE'] = True
+        self.deg_df['DE'] = 'None'
+        self.deg_df.loc[(self.deg_df.pvals_adj < float(padj_cutoff)) & (self.deg_df.logfoldchanges > float(lfc_cutoff)), 'DE'] = 'ROI1'
+        self.deg_df.loc[(self.deg_df.pvals_adj < float(padj_cutoff)) & (self.deg_df.logfoldchanges < -float(lfc_cutoff)), 'DE'] = 'ROI2'
             
         print("Extract DEGs")
         return self.deg_df

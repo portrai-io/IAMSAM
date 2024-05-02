@@ -152,6 +152,7 @@ def update_masks_on_resize(scale_factor, selected):
     Output("deg_volcano", "figure", allow_duplicate=True),
     Output("deg_box", "figure", allow_duplicate=True),
     Output("deg_enrich", "figure", allow_duplicate=True),
+    Output("deg_enrich2", "figure", allow_duplicate=True),
     Output("deg_celltype", "figure", allow_duplicate=True),
     Output("msg", "children", allow_duplicate = True),
     Input('reset', 'n_clicks'),
@@ -168,7 +169,7 @@ def reset_button_in_everything_mode(n_clicks, alpha):
     fig.update_layout(margin=dict(l=1, r=1, t=1, b=1))
     ps.boxes = []
     
-    return fig, [''], blank_fig(), blank_fig(), blank_fig(), blank_fig(), None
+    return fig, [''], blank_fig(), blank_fig(), blank_fig(), blank_fig(), blank_fig(), None
 
 
 
@@ -353,6 +354,7 @@ def run_sam_in_prompt_mode(n_clicks, alpha):
     Output("deg_volcano", "figure", allow_duplicate=True),
     Output("deg_box", "figure", allow_duplicate=True),
     Output("deg_enrich", "figure", allow_duplicate=True),
+    Output("deg_enrich2", "figure", allow_duplicate=True),
     Output("deg_celltype", "figure", allow_duplicate=True),
     Output("msg", "children", allow_duplicate = True),
     Input('run_deg', 'n_clicks'),
@@ -361,11 +363,10 @@ def run_sam_in_prompt_mode(n_clicks, alpha):
     State('lfc_cutoff', 'value'),
     State('pval_cutoff', 'value'),
     State('geneset', 'value'),
-    State('model_dropdown', 'value'),
-    State("organism-radio", 'value'),
+    State('organism-radio', 'value'),
     prevent_initial_call=True
 )
-def run_downstream_analysis(n_clicks, selected1, selected2, lfc, padj, geneset, model, organism):
+def run_downstream_analysis(n_clicks, selected1, selected2, lfc, padj, geneset, organism):
 
     if selected1 is None or '' in selected1:
         raise PreventUpdate
@@ -386,21 +387,24 @@ def run_downstream_analysis(n_clicks, selected1, selected2, lfc, padj, geneset, 
             msg = 'Error occurred in Calculating DEG'
         
         try: 
-            fig_enrich = do_enrichment_analysis(In_df, geneset, organism)
+            fig_enrich1 = do_enrichment_analysis_for_ROI1(In_df, geneset, organism)
+            fig_enrich2 = do_enrichment_analysis_for_ROI2(In_df, geneset, organism)
         except:
             print("Error in enrichr")
-            fig_enrich = blank_fig()
+            fig_enrich1 = blank_fig()
+            fig_enrich2 = blank_fig()
             msg = 'Error occured in enrichment analysis'
         
         try:
-            fig_celltype = do_celltypist(model, ps.adata, organism)
+            fig_celltype = blank_fig()
+            #plot_deconv_piechart(ps.adata)
         except:
             print("Error in celltypist")
             fig_celltype = blank_fig()
             msg = 'Error occured in celltypist'
         
         
-        return fig_volcano, fig_box, fig_enrich, fig_celltype, msg
+        return fig_volcano, fig_box, fig_enrich1, fig_enrich2, fig_celltype, msg
 
 
 
@@ -421,7 +425,7 @@ def export_barcode_info(n_clicks):
         if 'mask_in' in ps.adata.obs.columns:
             export = pd.DataFrame(ps.adata.obs['mask_in'])
             print("Export barcode informations")
-            return dcc.send_data_frame(export.to_csv, "mask_in.csv")
+            return dcc.send_data_frame(export.to_csv, "barcodes.csv")
     except:
         print("Prevent update")
         raise PreventUpdate
@@ -443,16 +447,6 @@ def export_deg_table(n_clicks):
     except:
         print("Prevent update")
         raise PreventUpdate
-
-
-
-
-
-
-
-
-
-
 
 
 

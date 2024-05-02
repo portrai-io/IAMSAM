@@ -58,8 +58,9 @@ def create_layout(app, flists, config):
                                 ], width = 2)
                             ]),
                             html.Br(),
+                            html.Br(),
 
-                            html.H4('Visium H&E image'),
+                            html.H4('H&E image'),
                             # H&E Figure
                             html.Div(
                                 dcc.Loading(id="ls-loading-2", 
@@ -236,16 +237,7 @@ def create_layout(app, flists, config):
                                            inline = True
                                         )
                                     ]),
-                                    html.Br(),
-                                    dbc.Row([
-                                        html.P('CellTypist Reference model'),
-                                        dcc.Dropdown(
-                                                id="model_dropdown",
-                                                multi=False,
-                                                value = 'Immune_All_High.pkl',
-                                                options = pd.read_csv('assets/celltypist_models_description.csv')['model'].tolist()
-                                        )
-                                    ])
+                                    html.Br()
                                 ], title = 'Downstream analysis settings')
                                 ], start_collapsed=True         
                             ),     
@@ -355,7 +347,24 @@ def create_layout(app, flists, config):
                                 style={'background-color':'transparent'}
                             )
                         ]),
-
+                        dbc.Col([
+                            dcc.Loading(
+                                dcc.Graph(
+                                    id="deg_enrich2",
+                                    figure = blank_fig(),
+                                    style={
+                                            'margin-top': 'auto',
+                                            'margin-bottom': 'auto',
+                                            'margin-left': 'auto',
+                                            'margin-right': 'auto'
+                                    },
+                                ),
+                                id = "loading-deg3",
+                                color= "#542C95",
+                                fullscreen= False,
+                                style={'background-color':'transparent'}
+                            )
+                        ])
                     ]) # Row
                 ], title ='Enrichment analysis' ), # Div
              dbc.AccordionItem([    
@@ -375,7 +384,7 @@ def create_layout(app, flists, config):
                             color= "#542C95",
                             fullscreen= False,
                             style={'background-color':'transparent'}
-                        )])], title = 'Cell type prediction')
+                        )])], title = 'Cell type deconvolution')
             ], start_collapsed=True,  always_open=True)
         ]),
 

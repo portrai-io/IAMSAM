@@ -154,6 +154,7 @@ def update_masks_on_resize(scale_factor, selected):
     Output("deg_enrich", "figure", allow_duplicate=True),
     Output("deg_enrich2", "figure", allow_duplicate=True),
     Output("deg_celltype", "figure", allow_duplicate=True),
+    Output("deg_celltype2", "figure", allow_duplicate=True),
     Output("msg", "children", allow_duplicate = True),
     Input('reset', 'n_clicks'),
     State("alpha-state", "value"),
@@ -169,7 +170,7 @@ def reset_button_in_everything_mode(n_clicks, alpha):
     fig.update_layout(margin=dict(l=1, r=1, t=1, b=1))
     ps.boxes = []
     
-    return fig, [''], blank_fig(), blank_fig(), blank_fig(), blank_fig(), blank_fig(), None
+    return fig, [''], blank_fig(), blank_fig(), blank_fig(), blank_fig(), blank_fig(), blank_fig(), None
 
 
 
@@ -356,6 +357,7 @@ def run_sam_in_prompt_mode(n_clicks, alpha):
     Output("deg_enrich", "figure", allow_duplicate=True),
     Output("deg_enrich2", "figure", allow_duplicate=True),
     Output("deg_celltype", "figure", allow_duplicate=True),
+    Output("deg_celltype2", "figure", allow_duplicate=True),
     Output("msg", "children", allow_duplicate = True),
     Input('run_deg', 'n_clicks'),
     State('roi-1', 'value'),
@@ -396,15 +398,15 @@ def run_downstream_analysis(n_clicks, selected1, selected2, lfc, padj, geneset, 
             msg = 'Error occured in enrichment analysis'
         
         try:
-            fig_celltype = blank_fig()
-            #plot_deconv_piechart(ps.adata)
+            fig_celltype = plot_deconv_piechart(ps.adata, 'ROI1')
+            fig_celltype2 = plot_deconv_piechart(ps.adata, 'ROI2')
         except:
             print("Error in celltypist")
             fig_celltype = blank_fig()
+            fig_celltype2 = blank_fig()
             msg = 'Error occured in celltypist'
         
-        
-        return fig_volcano, fig_box, fig_enrich1, fig_enrich2, fig_celltype, msg
+        return fig_volcano, fig_box, fig_enrich1, fig_enrich2, fig_celltype, fig_celltype2, msg
 
 
 

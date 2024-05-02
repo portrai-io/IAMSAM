@@ -384,7 +384,28 @@ def create_layout(app, flists, config):
                             color= "#542C95",
                             fullscreen= False,
                             style={'background-color':'transparent'}
-                        )])], title = 'Cell type deconvolution')
+                        )]
+                         
+                    ),
+                 dbc.Row([
+                        dcc.Loading(
+                                dcc.Graph(
+                                    id="deg_celltype2",
+                                    figure = blank_fig(),
+                                    style={
+                                                'margin-top': 'auto',
+                                                'margin-bottom': 'auto',
+                                                'margin-left': 'auto',
+                                                'margin-right': 'auto'
+                                        },
+                                ),
+                                id = "loading-celltype",
+                                color= "#542C95",
+                                fullscreen= False,
+                                style={'background-color':'transparent'}
+                            )]
+                             
+                    )], title = 'Cell type deconvolution')
             ], start_collapsed=True,  always_open=True)
         ]),
 

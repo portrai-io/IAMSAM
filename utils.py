@@ -323,10 +323,19 @@ def do_enrichment_analysis_for_ROI2(In_df, gene_sets, organism, top_n = 10):
     
 
 
-#def plot_deconv_piechart():
+def plot_deconv_piechart(adata, roi):
+    celltype_df = adata.obs.loc[adata.obs['ROIs'] == roi, adata.obs.columns.str.startswith('celltype')].copy()
+    
+    prop_df = pd.DataFrame(celltype_df.mean(axis=0))
+    prop_df.index = prop_df.index.str.replace('celltype_', '')
+    prop_df.columns = ['prop']
+    
+    fig = px.pie(data_frame=prop_df, names = prop_df.index, values='prop')
 
-
-
+    fig.update_layout(legend_title_text = f'Cell type proportion of {roi}')
+    fig.update_traces(textposition = 'inside', textinfo='percent+label',
+                        hovertemplate =  '%{label} : %{percent} ') 
+    return fig
     
 
     

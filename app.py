@@ -84,9 +84,8 @@ def load_he_image(tissue_dir, reset):
     if tissue_dir is None:
         raise PreventUpdate
     reset = reset+1
-    
     ps.adata = None
-    ps.load_visium(tissue_dir)
+    ps.load_data(tissue_dir)
     fig = px.imshow(ps.tsimg_rgb)
     fig.update_xaxes(visible=False)
     fig.update_yaxes(visible=False)
@@ -97,15 +96,16 @@ def load_he_image(tissue_dir, reset):
 
 
 @app.callback(
-    [Output('roi-1', 'options'),
-     Output('roi-2', 'options')],
-    [Input('mask_list', 'options'),
-     Input('roi-1', 'value'),
-     Input('roi-2', 'value')]
+    Output('roi-1', 'options', allow_duplicate=True),
+    Output('roi-2', 'options', allow_duplicate=True),
+    Input('mask_list', 'options'),
+    Input('roi-1', 'value'),
+    Input('roi-2', 'value'),
+    prevent_initial_call=True
 )
 def update_dropdown_options(master_values, selected1, selected2):
-    all_options = [{'label': str(i), 'value': i} for i in range(len(ps.masks))]
-    
+    all_options = [{'label': str(i), 'value': i} for i in range(1, len(ps.masks)+1)]
+
     if not master_values:
         return [], []
 
@@ -139,8 +139,8 @@ def update_masks_on_resize(scale_factor, selected):
     ps.masks = resized_masks  # Update global mask list
     
     # Update dropdown options to reflect current masks
-    options = [{'label': f"Mask {i + 1}", 'value': i + 1} for i in range(len(resized_masks))]
-    
+    options = [{'label': str(i), 'value': i} for i in range(len(resized_masks))]
+ 
     # Ensure selected values are still valid
     selected = [s for s in selected if s <= len(resized_masks)]
     return options, selected
@@ -148,13 +148,12 @@ def update_masks_on_resize(scale_factor, selected):
 
 @app.callback(
     Output("he_image", "figure", allow_duplicate=True),
-    Output('mask_list', 'value', allow_duplicate=True),
+    Output('mask_list', 'options', allow_duplicate=True),
     Output("deg_volcano", "figure", allow_duplicate=True),
     Output("deg_box", "figure", allow_duplicate=True),
     Output("deg_enrich", "figure", allow_duplicate=True),
     Output("deg_enrich2", "figure", allow_duplicate=True),
     Output("deg_celltype", "figure", allow_duplicate=True),
-    Output("deg_celltype2", "figure", allow_duplicate=True),
     Output("msg", "children", allow_duplicate = True),
     Input('reset', 'n_clicks'),
     State("alpha-state", "value"),
@@ -178,7 +177,7 @@ def reset_button_in_everything_mode(n_clicks, alpha):
 
 @app.callback(
     Output("he_image", "figure", allow_duplicate=True),
-    Output('mask_list', 'options'),    
+    Output('mask_list', 'options', allow_duplicate=True),    
     Input('run_sam', 'n_clicks'),
     State("alpha-state", "value"),
     State("pred_iou_thresh", "value"),
@@ -206,17 +205,15 @@ def run_sam_in_everything_mode(n_clicks, alpha, pred_iou_thresh):
     return fig, mask_names
 
 @app.callback(
-    Output('mask_list', 'value', allow_duplicate=True),
     Output('roi-1', 'value', allow_duplicate=True),
-    Output('roi-1', 'options', allow_duplicate=True),
     Input('hover_click', 'n_clicks'),
     State('he_image', 'hoverData'),
-    State('mask_list', 'value'),
+    State('roi-1', 'value'),
     State("url", "pathname"),
     prevent_initial_call=True
 )
 def display_click_data(n_clicks, fig, selected, pathname):
-    if pathname == "/IAMSAM/prompt": # Only for everything mode
+    if pathname == "/prompt": # Only for everything mode
         raise PreventUpdate
         
     if n_clicks is None:
@@ -233,9 +230,8 @@ def display_click_data(n_clicks, fig, selected, pathname):
             selected.append(idx)
         elif idx in selected:
             selected.remove(idx)
+        return selected
 
-        options = [{'label': f"Mask {i}", 'value': i} for i in selected]
-        return selected, selected, options
 
 @app.callback(
     Output("he_image","figure", allow_duplicate=True),
@@ -287,7 +283,7 @@ def update_selected_mask(roi1, roi2, alpha):
     prevent_initial_call=True,
 )
 def display_relayout_data(relayoutData, pathname):
-    if pathname == "/IAMSAM/main":
+    if pathname == "/main":
         raise PreventUpdate
     try:
         shapes = relayoutData['shapes']
@@ -315,7 +311,7 @@ def display_relayout_data(relayoutData, pathname):
 
 @app.callback(
     Output("he_image", "figure", allow_duplicate=True),
-    Output('mask_list', 'value', allow_duplicate=True),
+    Output('mask_list', 'options', allow_duplicate=True),
     Output('roi-1', 'value', allow_duplicate=True),
     Input('run_sam_prompt', 'n_clicks'),
     State("alpha-state", "value"),
@@ -344,9 +340,8 @@ def run_sam_in_prompt_mode(n_clicks, alpha):
     fig.update_traces(
         customdata = masks_int,
         hovertemplate="MaskNumber: %{customdata}<extra></extra>")
-
-    #options = [{'label': f"Mask {i}", 'value': i} for i in selected]
-    return fig, selected, selected
+    mask_names = list(range(1, len(masks)+1))
+    return fig, mask_names, mask_names
 
 
 ### Downstream anylsis ###
@@ -357,7 +352,6 @@ def run_sam_in_prompt_mode(n_clicks, alpha):
     Output("deg_enrich", "figure", allow_duplicate=True),
     Output("deg_enrich2", "figure", allow_duplicate=True),
     Output("deg_celltype", "figure", allow_duplicate=True),
-    Output("deg_celltype2", "figure", allow_duplicate=True),
     Output("msg", "children", allow_duplicate = True),
     Input('run_deg', 'n_clicks'),
     State('roi-1', 'value'),
@@ -372,7 +366,9 @@ def run_downstream_analysis(n_clicks, selected1, selected2, lfc, padj, geneset, 
 
     if selected1 is None or '' in selected1:
         raise PreventUpdate
- 
+    if selected2 is None or '' in selected2 or not selected2:
+        selected2 = None
+    
     if len(ps.masks) > 0:
 
         In_df = ps.extract_degs(selected1, selected2, padj_cutoff = padj, lfc_cutoff = lfc)
@@ -398,15 +394,15 @@ def run_downstream_analysis(n_clicks, selected1, selected2, lfc, padj, geneset, 
             msg = 'Error occured in enrichment analysis'
         
         try:
-            fig_celltype = plot_deconv_piechart(ps.adata, 'ROI1')
-            fig_celltype2 = plot_deconv_piechart(ps.adata, 'ROI2')
+            fig_celltype = plot_deconv_barchart(ps.adata)
+            #fig_celltype2 = plot_deconv_piechart(ps.adata, 'ROI2')
         except:
-            print("Error in celltypist")
+            print("Error in cell deconvolution")
             fig_celltype = blank_fig()
-            fig_celltype2 = blank_fig()
-            msg = 'Error occured in celltypist'
+           # fig_celltype2 = blank_fig()
+            msg = 'Error occured in plotting cell deconvolution'
         
-        return fig_volcano, fig_box, fig_enrich1, fig_enrich2, fig_celltype, fig_celltype2, msg
+        return fig_volcano, fig_box, fig_enrich1, fig_enrich2, fig_celltype, msg
 
 
 
@@ -424,10 +420,12 @@ def export_barcode_info(n_clicks):
         raise PreventUpdate
 
     try:
-        if 'mask_in' in ps.adata.obs.columns:
-            export = pd.DataFrame(ps.adata.obs['mask_in'])
-            print("Export barcode informations")
-            return dcc.send_data_frame(export.to_csv, "barcodes.csv")
+        if 'ROIs' in ps.adata.obs.columns:
+            celltype_cols = list(ps.adata.obs.columns[ps.adata.obs.columns.str.startswith('celltype')])
+
+            export = ps.adata.obs[celltype_cols + ['ROIs']]
+            print("Export ROI data csv")
+            return dcc.send_data_frame(export.to_csv, "export.csv")
     except:
         print("Prevent update")
         raise PreventUpdate
@@ -442,13 +440,14 @@ def export_deg_table(n_clicks):
         raise PreventUpdate
 
     try:
-        if ps.In_df is not None:
-            deg = ps.In_df
+        if ps.deg_df is not None:
+            deg = ps.deg_df
             print("Export DEG tables")
             return dcc.send_data_frame(deg.to_csv, "DEG.csv")
     except:
         print("Prevent update")
         raise PreventUpdate
+
 
 
 

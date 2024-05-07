@@ -215,6 +215,8 @@ def footnote():
     return footnote
 
 
+
+
 def initial_img(path):
     initial_img = cv2.imread(path)
     initial_img = cv2.cvtColor(initial_img, cv2.COLOR_BGR2RGB)
@@ -258,7 +260,7 @@ def plot_box(In_df, adata, top_n = 10):
     top_gene = In_df[In_df['DE'] == 'ROI1'].sort_values('logfoldchanges', ascending=False)
     top_gene = top_gene.head(n=top_n).names
     top_idx = [adata.var_names.tolist().index(x) if x in adata.var_names else None for x in top_gene]
-    top_df = pd.DataFrame(adata.X.todense()[:,top_idx], columns=top_gene, index= adata_roi.obs_names)
+    top_df = pd.DataFrame(adata_roi.X.todense()[:,top_idx], columns=top_gene, index= adata_roi.obs_names)
     
     top_df = top_df.merge(adata_roi.obs['ROIs'], how = 'left', left_index=True, right_index=True)
     top_df['ROIs'] = top_df['ROIs'].astype('category')
@@ -275,7 +277,6 @@ def plot_box(In_df, adata, top_n = 10):
     fig.update_layout(legend_title_text = 'Region of Interest')
     fig.update_xaxes(title_text = 'Gene symbols')
     fig.update_yaxes(title_text = 'Normalized exp.')
-    fig.show()
     
     return fig   
 
@@ -321,88 +322,30 @@ def do_enrichment_analysis_for_ROI2(In_df, gene_sets, organism, top_n = 10):
 
     return fig
     
-
-
-def plot_deconv_piechart(adata, roi):
-    celltype_df = adata.obs.loc[adata.obs['ROIs'] == roi, adata.obs.columns.str.startswith('celltype')].copy()
+def plot_deconv_barchart(adata):
+    celltype_df_roi1 = adata.obs.loc[adata.obs['ROIs'] == 'ROI1', adata.obs.columns.str.startswith('celltype')].copy()
+    celltype_df_roi2 = adata.obs.loc[adata.obs['ROIs'] == 'ROI2', adata.obs.columns.str.startswith('celltype')].copy()
     
-    prop_df = pd.DataFrame(celltype_df.mean(axis=0))
-    prop_df.index = prop_df.index.str.replace('celltype_', '')
-    prop_df.columns = ['prop']
+    prop_df_roi1 = pd.DataFrame(celltype_df_roi1.mean(axis=0))
+    prop_df_roi2 = pd.DataFrame(celltype_df_roi2.mean(axis=0))
     
-    fig = px.pie(data_frame=prop_df, names = prop_df.index, values='prop')
+    prop_df_roi1.index = prop_df_roi1.index.str.replace('celltype_', '')
+    prop_df_roi2.index = prop_df_roi2.index.str.replace('celltype_', '')
+    
+    prop_df_roi1.columns = ['ROI1']
+    prop_df_roi2.columns = ['ROI2']
+    
+    prop_df = pd.concat([prop_df_roi1, prop_df_roi2], axis=1)
 
-    fig.update_layout(legend_title_text = f'Cell type proportion of {roi}')
-    fig.update_traces(textposition = 'inside', textinfo='percent+label',
-                        hovertemplate =  '%{label} : %{percent} ') 
+   # palette = adata.uns['palette']  # get the color map from anndata
+    fig = px.bar(data_frame=prop_df,
+                 barmode='group',
+                 color_discrete_map={
+                          'ROI1' : '#542C95', 
+                          'ROI2' : '#764a23'
+                      })
+    fig.update_layout(legend_title_text='ROI', xaxis_title='Cell Type', yaxis_title='Proportion')
+    fig.update_traces(hovertemplate='%{x} : %{y:.2f} ')
+
     return fig
-    
 
-    
-# def do_celltypist(model, adata, sample_organism):
-    
-#     celltypist.models.download_models()
-    
-#     df = pd.read_csv('assets/celltypist_models_description.csv')
-#     model_organism = df[df.model == model].organism.values[0]
-    
-#     if sample_organism == model_organism:
-#         print("Skip gene conversion")
-#     else:
-#         adata = human_mouse_conversion(adata, model_organism)
-    
-#     predictions = celltypist.annotate(adata, 
-#                                   model = model, 
-#                                 mode = 'best match',
-#     )
-    
-#     prob_mat = predictions.probability_matrix
-#     prob_mat = prob_mat.apply(lambda x : x / x.sum(), axis = 1)
-#     prob_mat = prob_mat.merge(adata.obs['ROIs'], left_index=True, right_index=True)
-#     prob_mat_in = prob_mat[prob_mat['ROIs'] == 'ROI1']
-#     cell_type_in = pd.DataFrame(prob_mat_in.sum(), columns = ['sum_prob']).reset_index()
-    
-#     fig = px.pie(data_frame=cell_type_in.sort_values('sum_prob', ascending=False).head(n = 6), 
-#              names = "index", values='sum_prob')
-#     fig.update_layout(legend_title_text = 'Top 6 cell type')
-#     fig.update_traces(textposition = 'inside', textinfo='percent+label',
-#                         hovertemplate =  '%{label} : %{percent} ') 
-#     return fig
-    
-    
-    
-# def human_mouse_conversion(input_anndata, target_organism):
-#     hom_table = pd.read_csv('assets/HOM_mouse_human_symbol_table.csv')
-    
-#     adata = input_anndata.copy()
-
-#     #h_or_m = human_or_mouse(adata)
-#     symbols = adata.var_names.tolist()
-
-#     # Mouse -> Human
-#     if target_organism == 'human':
-#         print("Gene symbol conversion : Mouse -> Human")
-#         hom_mouse_symbol = hom_table['Mouse_symbol'].tolist()
-#         for i in range(len(symbols)):
-#             gene = symbols[i]
-#             if gene in hom_mouse_symbol:
-#                 gene_h = hom_table.iloc[hom_mouse_symbol.index(gene), 2]
-#                 symbols[i] = gene_h
-
-#     # Human -> Mouse
-#     elif target_organism == 'mouse' :
-#         print("Gene symbol conversion : Human -> Mouse")
-#         hom_human_symbol = hom_table['Human_symbol'].tolist()
-#         for i in range(len(symbols)):
-#             gene = symbols[i]
-#             if gene in hom_human_symbol:
-#                 gene_m = hom_table.iloc[hom_human_symbol.index(gene), 1]
-#                 symbols[i] = gene_m
-
-#     else:
-#         print("Celltypist can only analyze human or mouse.")
-
-
-#     adata.var_names = symbols
-#     adata.var_names = adata.var_names.astype('str')
-#     return adata

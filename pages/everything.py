@@ -254,28 +254,24 @@ def create_layout(app, flists, config):
                                         'background-color': "#542C95"
                                     }
                                 ),
-                                 dbc.Row([
-                                     dbc.Col([
-                                         dbc.Button(
-                                            id='export-barcode',
-                                            outline=True, 
-                                            color="secondary",
-                                            children="Export ROI barcode",
-                                            n_clicks = 0,
-                                            class_name = "btn btn-secondary"
-                                        )
-                                     ]),
-                                     dbc.Col([
-                                         dbc.Button(
-                                            id='export-deg',
-                                            outline=True, 
-                                            color="secondary",
-                                            children="Export DEG table",
-                                            n_clicks = 0,
-                                            class_name = "btn btn-secondary"
-                                        )
-                                     ])
-                                 ]),
+                                dbc.ButtonGroup([
+                                    dbc.Button(
+                                        id='export-barcode',
+                                        outline=True,
+                                        color="secondary",
+                                        children="Export ROI data",
+                                        n_clicks=0,
+                                        className="btn btn-secondary"
+                                    ),
+                                    dbc.Button(
+                                        id='export-deg',
+                                        outline=True,
+                                        color="secondary",
+                                        children="Export DEG table",
+                                        n_clicks=0,
+                                        className="btn btn-secondary"
+                                    )
+                                ], vertical = True),
                                 dcc.Download(id = 'download-barcode'),
                                 dcc.Download(id = 'download-deg'),
                                 html.Br(),
@@ -386,25 +382,6 @@ def create_layout(app, flists, config):
                             style={'background-color':'transparent'}
                         )]
                          
-                    ),
-                 dbc.Row([
-                        dcc.Loading(
-                                dcc.Graph(
-                                    id="deg_celltype2",
-                                    figure = blank_fig(),
-                                    style={
-                                                'margin-top': 'auto',
-                                                'margin-bottom': 'auto',
-                                                'margin-left': 'auto',
-                                                'margin-right': 'auto'
-                                        },
-                                ),
-                                id = "loading-celltype",
-                                color= "#542C95",
-                                fullscreen= False,
-                                style={'background-color':'transparent'}
-                            )]
-                             
                     )], title = 'Cell type deconvolution')
             ], start_collapsed=True,  always_open=True)
         ]),

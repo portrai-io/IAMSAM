@@ -4,11 +4,15 @@ import pandas as pd
 import cv2
 import json
 import torch
+import urllib.request
+from tqdm import tqdm
 import matplotlib.pyplot as plt
 from segment_anything import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
 import supervision as sv
 import gseapy
 from gseapy import barplot, dotplot
+from numba import jit
+
 from utils import *
 
 class IAMSAM():
@@ -20,7 +24,14 @@ class IAMSAM():
             print('Allocated:', round(torch.cuda.memory_allocated(0)/1024**3,1), 'GB')
             print('Cached:   ', round(torch.cuda.memory_reserved(0)/1024**3,1), 'GB')
         
-        
+          # Download checkpoint if it doesn't exist
+        if not os.path.exists(chkp_path):
+            url = 'https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth'
+            print(f"Downloading checkpoint from {url}...")
+            with tqdm(unit='B', unit_scale=True, leave=True) as t:
+                urllib.request.urlretrieve(url, chkp_path, reporthook=lambda *x: t.update(1))
+            print("Checkpoint downloaded.")
+            
         sam = sam_model_registry[model_type](checkpoint=chkp_path)
         sam.to(device=DEVICE)
         
@@ -31,7 +42,7 @@ class IAMSAM():
         self.masks = []
         self.boxes = []
     
-    def load_visium(self, h5ad_dir):
+    def load_data(self, h5ad_dir):
 
         # Load Anndata
         self.adata = sc.read_h5ad(h5ad_dir) 
@@ -73,6 +84,11 @@ class IAMSAM():
         # For Prompt mode
         self.predictor.set_image(self.tsimg_rgb_cropped)        
         self.prompt_flag = False
+
+
+        # Check cell type information
+        if not any(self.adata.obs.columns.str.startswith('celltype')):
+            raise ValueError("No 'celltype_' column found in adata.obs")
     
     
     def get_mask_prompt_mode(self):
@@ -97,7 +113,7 @@ class IAMSAM():
         
         masks_integrated = np.zeros((self.tsimg_rgb.shape[0], self.tsimg_rgb.shape[1]))
         for ii, mm in enumerate(self.masks):
-            masks_integrated[mm == 1] = ii # 0-based index    
+            masks_integrated[mm == 1] = ii + 1 # 1-based index    
         self.integrated_masks = masks_integrated
         return self.masks
     
@@ -168,49 +184,39 @@ class IAMSAM():
         for ii , mm in enumerate(self.masks):
             masks_integrated[mm == 1] = ii + 1 # 1-based index    
         self.integrated_masks = masks_integrated
-
-        
         
         return self.masks
 
     
     def extract_degs(self, selected1, selected2, padj_cutoff, lfc_cutoff):
-
-        # Add selected mask as 'ROI-1' in adata.obs
-        selmask = np.zeros((self.tsimg_rgb.shape[0], self.tsimg_rgb.shape[1]))
-        for idx in selected1:
-            selmask = selmask + self.masks[idx]
-        selmask = np.array(selmask > 0)
-
-        roi1 = []
-        for idx in range(self.adata.n_obs):
-            iiy = round(self.adata.obs.iloc[idx,:]['imgrow_'])
-            iix = round(self.adata.obs.iloc[idx,:]['imgcol_'])
-            roi1.append(selmask[iiy, iix])
-
-        # if ROI-2 exists then add ROI-2, else add others.
-        if not selected2:
-            selmask = np.zeros((self.tsimg_rgb.shape[0], self.tsimg_rgb.shape[1]))
-            for idx in selected2:
-                selmask = selmask + self.masks[idx]
-            selmask = np.array(selmask > 0)
     
-            roi2 = []
-            for idx in range(self.adata.n_obs):
-                iiy = round(self.adata.obs.iloc[idx,:]['imgrow_'])
-                iix = round(self.adata.obs.iloc[idx,:]['imgcol_'])
-                roi2.append(selmask[iiy, iix])
+        # Add selected mask as 'ROI-1' in adata.obs
+        roi1_mask = np.zeros((self.tsimg_rgb.shape[0], self.tsimg_rgb.shape[1]))
+        for idx in selected1:
+            roi1_mask = roi1_mask + self.masks[idx-1]
+        roi1_mask = np.array(roi1_mask > 0)
+    
+        coords = np.round(self.adata.obs[['imgcol_', 'imgrow_']]).astype('int').values 
+        roi1 = calculate_mask_values(coords, roi1_mask)
+    
+        # if ROI-2 exists then add ROI-2, else add others.
+        if selected2 is not None:
+            roi2_mask = np.zeros((self.tsimg_rgb.shape[0], self.tsimg_rgb.shape[1]))
+            for idx in selected2:
+                roi2_mask = roi2_mask + self.masks[idx-1]
+            roi2_mask = np.array(roi2_mask > 0)
+            
+            calculate_mask_values(coords, roi2_mask)
             
         else:
             roi2 = np.invert(roi1)
-            
-
+    
         self.adata.obs['ROIs'] = ['ROI1' if in1 else 'ROI2' if in2 else '' for in1, in2 in zip(roi1, roi2)]
         
         # Test DEG
         adata_roi = self.adata[np.isin(self.adata.obs['ROIs'], ['ROI1', 'ROI2']),:].copy()
         sc.tl.rank_genes_groups(adata_roi, 'ROIs', method='wilcoxon', key_added='DEG')
-
+    
         # DEG_result
         self.deg_df = sc.get.rank_genes_groups_df(adata_roi, group = 'ROI1', key = 'DEG')
         self.deg_df['-log10Padj'] = -np.log10(self.deg_df['pvals_adj'])
@@ -221,3 +227,15 @@ class IAMSAM():
             
         print("Extract DEGs")
         return self.deg_df
+
+
+
+# Define the function to calculate the mask values
+@jit(nopython=True)
+def calculate_mask_values(coords, selmask):
+    result = np.zeros(coords.shape[0], dtype=np.bool_)  # Explicitly set dtype to boolean
+    for i in range(coords.shape[0]):
+        x = coords[i, 0]
+        y = coords[i, 1]
+        result[i] = selmask[y, x]
+    return result

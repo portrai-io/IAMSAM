@@ -187,7 +187,7 @@ def footnote():
                 'align' : 'center'
                     }
             ),
-            html.Div(id = 'reset_load', n_clicks = 0), # Hidden div to reset with 
+       #     html.Div(id = 'reset_load', n_clicks = 0), # Hidden div to reset with 
             dbc.Row(
                 dbc.Col(
                     html.A( 
@@ -215,6 +215,8 @@ def footnote():
     return footnote
 
 
+
+
 def initial_img(path):
     initial_img = cv2.imread(path)
     initial_img = cv2.cvtColor(initial_img, cv2.COLOR_BGR2RGB)
@@ -237,9 +239,10 @@ def blank_fig():
 def plot_volcano(In_df):
     fig = px.scatter(data_frame=In_df, x = "logfoldchanges", y = "-log10Padj",
                       text = "names", color = 'DE', color_discrete_map={
-                          True : '#542C95', 
-                          False : 'lightgrey'
-                      }, title = 'Volcano plot')
+                          'ROI1' : '#542C95', 
+                          'ROI2' : '#764a23',
+                          'None' : 'lightgrey'
+                      }, title = 'Volcano plot (ROI2 vs. ROI1)')
     fig.update_layout(legend_title_text = 'Differentially Expressed Gene')
     fig.update_traces(mode = "markers",
                      hovertemplate =  'Gene symbol : %{text} <br>' +
@@ -251,58 +254,35 @@ def plot_volcano(In_df):
     return fig
 
 def plot_box(In_df, adata, top_n = 10):
-    top_gene = In_df[In_df['DE'] == True].sort_values('logfoldchanges', ascending=False)
-    top_gene = top_gene.head(n=top_n).names
-    top_idx = [adata.var_names.tolist().index(x) if x in adata.var_names else None for x in top_gene ]
-    top_df = pd.DataFrame(adata.X.todense()[:,top_idx], columns=top_gene, index= adata.obs_names)
-    top_df = top_df.merge(adata.obs['mask_in'], how = 'left', left_index=True, right_index=True)
-    top_df['mask_in'].cat.categories = ['Yes', 'No']
 
+    adata_roi = adata[np.isin(adata.obs['ROIs'], ['ROI1', 'ROI2']),:].copy()
     
-    fig = px.box(data_frame = top_df.melt(id_vars = 'mask_in'), 
+    top_gene = In_df[In_df['DE'] == 'ROI1'].sort_values('logfoldchanges', ascending=False)
+    top_gene = top_gene.head(n=top_n).names
+    top_idx = [adata.var_names.tolist().index(x) if x in adata.var_names else None for x in top_gene]
+    top_df = pd.DataFrame(adata_roi.X.todense()[:,top_idx], columns=top_gene, index= adata_roi.obs_names)
+    
+    top_df = top_df.merge(adata_roi.obs['ROIs'], how = 'left', left_index=True, right_index=True)
+    top_df['ROIs'] = top_df['ROIs'].astype('category')
+
+    fig = px.box(data_frame = top_df.melt(id_vars = 'ROIs'), 
                     x = "variable",
-                    y = 'value', color = 'mask_in',
+                    y = 'value', color = 'ROIs',
                     color_discrete_map={
-                          'Yes' : '#542C95', 
-                          'No' : 'lightgrey'
+                          'ROI1' : '#542C95', 
+                          'ROI2' : '#764a23'
                       }, 
-                    category_orders={"mask_in" : ['Yes', 'No']},
-                    title = 'Top{} high foldchange DEGs in ROI'.format(top_n))
+                    category_orders={"mask_in" : ['ROI1', 'ROI2']},
+                    title = 'Top{} high foldchange DEGs in ROI1 compare to ROI2'.format(top_n))
     fig.update_layout(legend_title_text = 'Region of Interest')
     fig.update_xaxes(title_text = 'Gene symbols')
     fig.update_yaxes(title_text = 'Normalized exp.')
-    fig.show()
     
     return fig   
 
-def plot_box2(In_df, adata, top_n = 10):
-    top_gene = In_df[In_df['DE'] == True].sort_values('logfoldchanges', ascending=False)
-    top_gene = top_gene.head(n=top_n).names
-    top_idx = [adata.var_names.tolist().index(x) if x in adata.var_names else None for x in top_gene ]
-    top_df = pd.DataFrame(adata.X.todense()[:,top_idx], columns=top_gene, index= adata.obs_names)
-    top_df = top_df.merge(adata.obs['mask_in'], how = 'left', left_index=True, right_index=True)
-    #top_df['mask_in'].cat.categories = ['ROI1', 'ROI2']
-    top_df['mask_in'] = top_df['mask_in'].astype('category')
-    
-    fig = px.box(data_frame = top_df.melt(id_vars = 'mask_in'), 
-                    x = "variable",
-                    y = 'value', color = 'mask_in',
-                    color_discrete_map={
-                          'ROI1' : '#542C95', 
-                          'ROI2' : '#F5D142'
-                      }, 
-                    category_orders={"mask_in" : ['ROI1', 'ROI2']},
-                    title = 'Top{} high foldchange DEGs in ROI'.format(top_n))
-    fig.update_layout(legend_title_text = 'Region of Interest')
-    fig.update_xaxes(title_text = 'Gene symbols')
-    fig.update_yaxes(title_text = 'Normalized exp.')
-    fig.show()
 
-    return fig 
-
-
-def do_enrichment_analysis(In_df, gene_sets, organism, top_n = 10):
-    degs_up = In_df[(In_df['logfoldchanges'] > 0) & (In_df['DE'] == True)].names
+def do_enrichment_analysis_for_ROI1(In_df, gene_sets, organism, top_n = 10):
+    degs_up = In_df[In_df['DE'] == 'ROI1'].names
     enr_up = gseapy.enrichr(gene_list = degs_up, 
                          gene_sets = gene_sets,
                          organism = organism,
@@ -313,7 +293,28 @@ def do_enrichment_analysis(In_df, gene_sets, organism, top_n = 10):
     enr_up_filtered['log10P'] = -np.log10(enr_up_filtered['Adjusted P-value'])
     enr_up_top = enr_up_filtered.sort_values('log10P', ascending=False).head(top_n)
     fig = px.bar(enr_up_top, 
-             x = "log10P", y = "Term", color = 'Gene_set', title = 'Top enriched terms (adj.P < 0.05)', 
+             x = "log10P", y = "Term", color = 'Gene_set', title = 'Top enriched terms (adj.P < 0.05) in ROI1', 
+             category_orders={'Term' : enr_up_top.Term.tolist()})
+    fig.update_layout(legend_title_text = 'Gene set')
+    fig.update_xaxes(title_text = '-log10(P-adj)')
+    fig.update_yaxes(title_text = 'Terms')
+
+    return fig
+
+
+def do_enrichment_analysis_for_ROI2(In_df, gene_sets, organism, top_n = 10):
+    degs_up = In_df[In_df['DE'] == 'ROI2'].names
+    enr_up = gseapy.enrichr(gene_list = degs_up, 
+                         gene_sets = gene_sets,
+                         organism = organism,
+                         outdir=None,
+    )
+
+    enr_up_filtered = enr_up.results[enr_up.results['Adjusted P-value'] < 0.05 ]
+    enr_up_filtered['log10P'] = -np.log10(enr_up_filtered['Adjusted P-value'])
+    enr_up_top = enr_up_filtered.sort_values('log10P', ascending=False).head(top_n)
+    fig = px.bar(enr_up_top, 
+             x = "log10P", y = "Term", color = 'Gene_set', title = 'Top enriched terms (adj.P < 0.05) in ROI2', 
              category_orders={'Term' : enr_up_top.Term.tolist()})
     fig.update_layout(legend_title_text = 'Gene set')
     fig.update_xaxes(title_text = '-log10(P-adj)')
@@ -321,105 +322,30 @@ def do_enrichment_analysis(In_df, gene_sets, organism, top_n = 10):
 
     return fig
     
+def plot_deconv_barchart(adata):
+    celltype_df_roi1 = adata.obs.loc[adata.obs['ROIs'] == 'ROI1', adata.obs.columns.str.startswith('celltype')].copy()
+    celltype_df_roi2 = adata.obs.loc[adata.obs['ROIs'] == 'ROI2', adata.obs.columns.str.startswith('celltype')].copy()
+    
+    prop_df_roi1 = pd.DataFrame(celltype_df_roi1.mean(axis=0))
+    prop_df_roi2 = pd.DataFrame(celltype_df_roi2.mean(axis=0))
+    
+    prop_df_roi1.index = prop_df_roi1.index.str.replace('celltype_', '')
+    prop_df_roi2.index = prop_df_roi2.index.str.replace('celltype_', '')
+    
+    prop_df_roi1.columns = ['ROI1']
+    prop_df_roi2.columns = ['ROI2']
+    
+    prop_df = pd.concat([prop_df_roi1, prop_df_roi2], axis=1)
 
-def do_celltypist(model, adata, sample_organism):
-    
-    celltypist.models.download_models()
-    
-    df = pd.read_csv('assets/celltypist_models_description.csv')
-    model_organism = df[df.model == model].organism.values[0]
-    
-    if sample_organism == model_organism:
-        print("Skip gene conversion")
-    else:
-        adata = human_mouse_conversion(adata, model_organism)
-    
-    predictions = celltypist.annotate(adata, 
-                                  model = model, 
-                                mode = 'best match',
-    )
-    
-    prob_mat = predictions.probability_matrix
-    prob_mat = prob_mat.apply(lambda x : x / x.sum(), axis = 1)
-    prob_mat = prob_mat.merge(adata.obs['mask_in'], left_index=True, right_index=True)
-    prob_mat_in = prob_mat[prob_mat['mask_in'] == 'In']
-    cell_type_in = pd.DataFrame(prob_mat_in.sum(), columns = ['sum_prob']).reset_index()
-    
-    fig = px.pie(data_frame=cell_type_in.sort_values('sum_prob', ascending=False).head(n = 6), 
-             names = "index", values='sum_prob')
-    fig.update_layout(legend_title_text = 'Top 6 cell type')
-    fig.update_traces(textposition = 'inside', textinfo='percent+label',
-                        hovertemplate =  '%{label} : %{percent} ') 
+   # palette = adata.uns['palette']  # get the color map from anndata
+    fig = px.bar(data_frame=prop_df,
+                 barmode='group',
+                 color_discrete_map={
+                          'ROI1' : '#542C95', 
+                          'ROI2' : '#764a23'
+                      })
+    fig.update_layout(legend_title_text='ROI', xaxis_title='Cell Type', yaxis_title='Proportion')
+    fig.update_traces(hovertemplate='%{x} : %{y:.2f} ')
+
     return fig
 
-
-def do_celltypist2(model, adata, sample_organism):
-    
-    celltypist.models.download_models()
-    
-    df = pd.read_csv('assets/celltypist_models_description.csv')
-    model_organism = df[df.model == model].organism.values[0]
-    
-    if sample_organism == model_organism:
-        print("Skip gene conversion")
-    else:
-        adata = human_mouse_conversion(adata, model_organism)
-    
-    predictions = celltypist.annotate(adata, 
-                                  model = model, 
-                                mode = 'best match',
-    )
-    
-    prob_mat = predictions.probability_matrix
-    prob_mat = prob_mat.apply(lambda x : x / x.sum(), axis = 1)
-    prob_mat = prob_mat.merge(adata.obs['mask_in'], left_index=True, right_index=True)
-    prob_mat_in = prob_mat[prob_mat['mask_in'] == 'ROI1']
-    cell_type_in = pd.DataFrame(prob_mat_in.sum(), columns = ['sum_prob']).reset_index()
-    
-    cell_type_in['sum_prob'] = pd.to_numeric(cell_type_in['sum_prob'], errors='coerce') 
-    cell_type_in = cell_type_in.dropna(subset=['sum_prob']) 
-    
-    fig = px.pie(data_frame=cell_type_in.sort_values('sum_prob', ascending=False).head(n = 6), 
-             names = "index", values='sum_prob')
-    fig.update_layout(legend_title_text = 'Top 6 cell type')
-    fig.update_traces(textposition = 'inside', textinfo='percent+label',
-                        hovertemplate =  '%{label} : %{percent} ') 
-    return fig
-
-
-    
-def human_mouse_conversion(input_anndata, target_organism):
-    hom_table = pd.read_csv('assets/HOM_mouse_human_symbol_table.csv')
-    
-    adata = input_anndata.copy()
-
-    #h_or_m = human_or_mouse(adata)
-    symbols = adata.var_names.tolist()
-
-    # Mouse -> Human
-    if target_organism == 'human':
-        print("Gene symbol conversion : Mouse -> Human")
-        hom_mouse_symbol = hom_table['Mouse_symbol'].tolist()
-        for i in range(len(symbols)):
-            gene = symbols[i]
-            if gene in hom_mouse_symbol:
-                gene_h = hom_table.iloc[hom_mouse_symbol.index(gene), 2]
-                symbols[i] = gene_h
-
-    # Human -> Mouse
-    elif target_organism == 'mouse' :
-        print("Gene symbol conversion : Human -> Mouse")
-        hom_human_symbol = hom_table['Human_symbol'].tolist()
-        for i in range(len(symbols)):
-            gene = symbols[i]
-            if gene in hom_human_symbol:
-                gene_m = hom_table.iloc[hom_human_symbol.index(gene), 1]
-                symbols[i] = gene_m
-
-    else:
-        print("Celltypist can only analyze human or mouse.")
-
-
-    adata.var_names = symbols
-    adata.var_names = adata.var_names.astype('str')
-    return adata

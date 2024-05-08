@@ -1,7 +1,9 @@
 
 # For internal test
+data/*
 config/*.pth
 
+test.ipynb
 # Jupyter, Python cache
 *.pyc
 __pycache__/

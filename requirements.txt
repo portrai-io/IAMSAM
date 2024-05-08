@@ -17,3 +17,5 @@ mygene==3.2.2
 nbformat
 torch
 torchvision
+imagecodecs
+tifffile

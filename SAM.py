@@ -12,6 +12,7 @@ import supervision as sv
 import gseapy
 from gseapy import barplot, dotplot
 from numba import jit
+from log import log
 
 from utils import *
 
@@ -36,7 +37,6 @@ class IAMSAM():
         sam.to(device=DEVICE)
         
         self.predictor = SamPredictor(sam_model=sam)
-        
         print("\n\nIAMSAM loaded.")
         self.sam = sam
         self.masks = []
@@ -76,7 +76,7 @@ class IAMSAM():
         self.tsimg_rgb_cropped = self.tsimg_rgb[self.yrange_[0]:self.yrange_[1], self.xrange_[0]:self.xrange_[1]]
         self.tsimg_bgr_cropped = self.tsimg_bgr[self.yrange_[0]:self.yrange_[1], self.xrange_[0]:self.xrange_[1]]
         
-        print("Image Loaded.")
+        log("Image Loaded.")
         print('X range : {} ~ {} '.format(self.xrange[0], self.xrange[1]))
         print('Y range : {} ~ {} '.format(self.yrange[0], self.yrange[1]))
 
@@ -88,6 +88,7 @@ class IAMSAM():
 
         # Check cell type information
         if not any(self.adata.obs.columns.str.startswith('celltype')):
+            log("No 'celltype_' column found in adata.obs")
             raise ValueError("No 'celltype_' column found in adata.obs")
     
     
@@ -205,8 +206,8 @@ class IAMSAM():
             for idx in selected2:
                 roi2_mask = roi2_mask + self.masks[idx-1]
             roi2_mask = np.array(roi2_mask > 0)
-            
-            calculate_mask_values(coords, roi2_mask)
+    
+            roi2 = calculate_mask_values(coords, roi2_mask)
             
         else:
             roi2 = np.invert(roi1)

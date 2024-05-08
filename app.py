@@ -19,7 +19,7 @@ from plotly.colors import n_colors
 from pages import everything, prompt
 from SAM import IAMSAM
 from utils import *
-
+from log import log, get_log_messages
 
 
 # Load Configuration
@@ -52,7 +52,17 @@ app.layout = html.Div(
     ]
 )
 
+
+
 ### For layout ###
+
+@app.callback(
+    Output("log-textarea", "value"),
+    Input("log-update-interval", "n_intervals")
+)
+def update_log_messages(n_intervals):
+    return get_log_messages()
+
 
 @app.callback(Output("page-content", "children"), 
               [Input("url", "pathname")])
@@ -90,7 +100,7 @@ def load_he_image(tissue_dir, reset):
     fig.update_xaxes(visible=False)
     fig.update_yaxes(visible=False)
     fig.update_layout(margin=dict(l=1, r=1, t=1, b=1))
-
+    
     ps.boxes = []    
     return fig, ['']
 
@@ -143,6 +153,8 @@ def update_masks_on_resize(scale_factor, selected):
  
     # Ensure selected values are still valid
     selected = [s for s in selected if s <= len(resized_masks)]
+
+    log("Mask size modulated")
     return options, selected
 
 
@@ -154,7 +166,6 @@ def update_masks_on_resize(scale_factor, selected):
     Output("deg_enrich", "figure", allow_duplicate=True),
     Output("deg_enrich2", "figure", allow_duplicate=True),
     Output("deg_celltype", "figure", allow_duplicate=True),
-    Output("msg", "children", allow_duplicate = True),
     Input('reset', 'n_clicks'),
     State("alpha-state", "value"),
     prevent_initial_call=True,
@@ -168,8 +179,10 @@ def reset_button_in_everything_mode(n_clicks, alpha):
     fig.update_yaxes(visible=False)
     fig.update_layout(margin=dict(l=1, r=1, t=1, b=1))
     ps.boxes = []
+
+    log('Reset.')
     
-    return fig, [''], blank_fig(), blank_fig(), blank_fig(), blank_fig(), blank_fig(), blank_fig(), None
+    return fig, [''], blank_fig(), blank_fig(), blank_fig(), blank_fig(), blank_fig(), blank_fig()
 
 
 
@@ -186,6 +199,13 @@ def reset_button_in_everything_mode(n_clicks, alpha):
 def run_sam_in_everything_mode(n_clicks, alpha, pred_iou_thresh):
     if n_clicks is None:
         raise PreventUpdate
+
+    if not (hasattr(ps, 'adata')):
+        log("Error : Data is not selected")
+        raise PreventUpdate
+
+    log("Running SAM with Everything mode")
+    
     masks = ps.get_mask(pred_iou_thresh = pred_iou_thresh)
     masks_int = ps.integrated_masks
     
@@ -200,8 +220,10 @@ def run_sam_in_everything_mode(n_clicks, alpha, pred_iou_thresh):
     fig.update_traces(
         customdata = masks_int,
         hovertemplate="MaskNumber: %{customdata}<extra></extra>")
-    
+
     mask_names = list(range(1, len(masks)+1))
+
+    log("Running SAM with Everything mode ... Done")
     return fig, mask_names
 
 @app.callback(
@@ -302,7 +324,7 @@ def display_relayout_data(relayoutData, pathname):
 
         ps.boxes.append(box)
         print('Box added : {}'.format(box))
-
+        log("Prompt mode : Box added")
         return '# of rectangles : {}'.format(len(ps.boxes))
     
     except:
@@ -323,7 +345,13 @@ def run_sam_in_prompt_mode(n_clicks, alpha):
         
     if len(ps.boxes) == 0 :        
         raise PreventUpdate
-        
+
+    if not (hasattr(ps, 'adata')):
+        log("Error : Data is not selected")
+        raise PreventUpdate
+
+    log("Running SAM with Prompt mode")
+    
     masks = ps.get_mask_prompt_mode()
     masks_int = ps.integrated_masks
     
@@ -341,6 +369,9 @@ def run_sam_in_prompt_mode(n_clicks, alpha):
         customdata = masks_int,
         hovertemplate="MaskNumber: %{customdata}<extra></extra>")
     mask_names = list(range(1, len(masks)+1))
+
+    log("Running SAM with Prompt mode ... Done")
+    
     return fig, mask_names, mask_names
 
 
@@ -352,7 +383,7 @@ def run_sam_in_prompt_mode(n_clicks, alpha):
     Output("deg_enrich", "figure", allow_duplicate=True),
     Output("deg_enrich2", "figure", allow_duplicate=True),
     Output("deg_celltype", "figure", allow_duplicate=True),
-    Output("msg", "children", allow_duplicate = True),
+    Output("downstream-loading", "children", allow_duplicate=True),
     Input('run_deg', 'n_clicks'),
     State('roi-1', 'value'),
     State('roi-2', 'value'),
@@ -364,16 +395,19 @@ def run_sam_in_prompt_mode(n_clicks, alpha):
 )
 def run_downstream_analysis(n_clicks, selected1, selected2, lfc, padj, geneset, organism):
 
+    log("Running Downstream analysis")
+    
     if selected1 is None or '' in selected1:
+        log("Error: No masks in ROI1")
         raise PreventUpdate
+        
     if selected2 is None or '' in selected2 or not selected2:
         selected2 = None
-    
+
     if len(ps.masks) > 0:
 
         In_df = ps.extract_degs(selected1, selected2, padj_cutoff = padj, lfc_cutoff = lfc)
         
-        msg = 'Analysis Done.' # Default message
         try:
             fig_volcano = plot_volcano(In_df)
             fig_box = plot_box(In_df, ps.adata)
@@ -382,7 +416,7 @@ def run_downstream_analysis(n_clicks, selected1, selected2, lfc, padj, geneset, 
             print("Error in DEG")
             fig_volcano = blank_fig()
             fig_box = blank_fig()
-            msg = 'Error occurred in Calculating DEG'
+            log('Error occurred in Calculating DEG')
         
         try: 
             fig_enrich1 = do_enrichment_analysis_for_ROI1(In_df, geneset, organism)
@@ -391,18 +425,18 @@ def run_downstream_analysis(n_clicks, selected1, selected2, lfc, padj, geneset, 
             print("Error in enrichr")
             fig_enrich1 = blank_fig()
             fig_enrich2 = blank_fig()
-            msg = 'Error occured in enrichment analysis'
+            log('Error occured in enrichment analysis')
         
         try:
             fig_celltype = plot_deconv_barchart(ps.adata)
-            #fig_celltype2 = plot_deconv_piechart(ps.adata, 'ROI2')
         except:
             print("Error in cell deconvolution")
             fig_celltype = blank_fig()
-           # fig_celltype2 = blank_fig()
-            msg = 'Error occured in plotting cell deconvolution'
-        
-        return fig_volcano, fig_box, fig_enrich1, fig_enrich2, fig_celltype, msg
+            log('Error occured in plotting cell deconvolution')
+
+        log("Running Downstream analysis ... Done")
+    
+        return fig_volcano, fig_box, fig_enrich1, fig_enrich2, fig_celltype, ''
 
 
 

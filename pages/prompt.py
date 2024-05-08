@@ -254,7 +254,16 @@ def create_layout(app, flists, config):
                                 dcc.Download(id = 'download-barcode'),
                                 dcc.Download(id = 'download-deg'),
                                 html.Br(),
-                                dbc.Spinner(html.Div(id = 'msg'))],  
+                                dbc.Spinner(html.Div(id = 'downstream-loading')),
+                                html.P('Log message'),
+                                dcc.Textarea(
+                                    id='log-textarea',
+                                    title = 'Log',
+                                    value='',
+                                    disabled=True,
+                                    style={'width': '100%', 'height': '200px',  'resize': 'none'}
+                                ),
+                                dcc.Interval(id='log-update-interval', interval=1000)],  
                                 className="d-grid gap-2"
                             )
                         ],width=4)
@@ -304,7 +313,6 @@ def create_layout(app, flists, config):
                 ),
                 dbc.AccordionItem([         
                     dbc.Row([
-                        dbc.Col([
                             dcc.Loading(
                                 dcc.Graph(
                                     id="deg_enrich",
@@ -321,8 +329,8 @@ def create_layout(app, flists, config):
                                 fullscreen= False,
                                 style={'background-color':'transparent'}
                             )
-                        ]),       
-                        dbc.Col([
+                    ]),      
+                    dbc.Row([
                             dcc.Loading(
                                 dcc.Graph(
                                     id="deg_enrich2",
@@ -339,9 +347,8 @@ def create_layout(app, flists, config):
                                 fullscreen= False,
                                 style={'background-color':'transparent'}
                             )
-                        ])
                     ]) # Row
-                ], title ='Enrichment analysis' ), # Div
+                ], title ='Enrichment analysis'), # Div
              dbc.AccordionItem([    
                  dbc.Row([
                     dcc.Loading(

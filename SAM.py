@@ -89,7 +89,8 @@ class IAMSAM():
         # Check cell type information
         if not any(self.adata.obs.columns.str.startswith('celltype')):
             log("No 'celltype_' column found in adata.obs")
-            raise ValueError("No 'celltype_' column found in adata.obs")
+            log("Cell type proportion analysis will not be working")
+            #raise ValueError("No 'celltype_' column found in adata.obs")
     
     
     def get_mask_prompt_mode(self):

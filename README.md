@@ -34,7 +34,7 @@ You can try IAMSAM in our [demo page](https://iamsam.portrai.io). If you want to
 
 IAMSAM follows the dependency of **Segment-anything**, which means that it requires the installation of both PyTorch and TorchVision with CUDA support.
 
-To use SAM, you need to download the **ViT-H SAM model file** (`sam_vit_h_4b8939.pth`) from [here](https://github.com/facebookresearch/segment-anything#model-checkpoints) and then place it in the `config` folder.
+To use SAM, IAMSAM will download the **ViT-H SAM model file** (`sam_vit_h_4b8939.pth`) from [here](https://github.com/facebookresearch/segment-anything#model-checkpoints) and then place it in the `config` folder.
 
 ## Installation
 This is the installation guide for the IAMSAM tool. Follow the steps below to install the tool:
@@ -44,6 +44,12 @@ This is the installation guide for the IAMSAM tool. Follow the steps below to in
     conda activate IAMSAM
     pip install -r requirements.txt
     
+
+## Preprocess your data
+We provide sample notebooks to preprocess Visium and Xenium data into h5ad format that can be effectively used in IAMSAM. You can choose any cell type deconvolution or mapping algorithm of your choice, but ensure that columns starting with the prefix 'celltype_' are added to .obs.
+
+- [Visium](/notebook/Preprocessing_visium.ipynb)
+- [Xenium](/notebook/Preprocessing_xenium.ipynb)
 
 
 ## Usage
@@ -57,18 +63,17 @@ This is the installation guide for the IAMSAM tool. Follow the steps below to in
 2. Open your web browser and go to **`http://localhost:{port}`**.
 3. Place your ST data in `data` folder. Please refer to this [guide](https://github.com/portrai-io/IAMSAM/blob/main/data/rule.md)
 4. Click the "Run SAM" button to do segmentation of H&E image.
-5. Click the "Run ST analysis" button to perform DEG analysis and GO term enrichment analysis.
+5. Click the "Run ST analysis" button to perform downstream analysis.
+
+
 
 ## Demo Data
-
+The data used in [demo page](https://iamsam.portrai.io).
 | Sample Name           | Repository                | Download Link                                                                                       |
 |-----------------------|---------------------------|-----------------------------------------------------------------------------------------------------|
-| Human_Breast_Cancer   | 10X Genomics Dataset      | [Link](https://www.10xgenomics.com/resources/datasets/human-breast-cancer-ductal-carcinoma-in-situ-invasive-carcinoma-ffpe-1-standard-1-3-0)   |
-| Mouse_Colon           | Gene Expression Omnibus   | [GSE5213483](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM5213483)                         |
-| Mouse_Brain_H&E       | Gene Expression Omnibus   | [GSM5519060](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM5519060)                         |
-| Mouse_4T1             | Gene Expression Omnibus   | [GSE196506](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE196506)                           |
-| Human_Prostate_Cancer | 10X Genomics Dataset      | [Link](https://www.10xgenomics.com/resources/datasets/human-prostate-cancer-adenocarcinoma-with-invasive-carcinoma-ffpe-1-standard-1-3-0) |
-| Mouse_Brain_FL        | 10X Genomics Dataset      | [Link](https://www.10xgenomics.com/resources/datasets/adult-mouse-brain-section-1-coronal-stains-dapi-anti-neu-n-1-standard-1-1-0)           |
+| Visium_Human_Breast_Cancer   | 10X Genomics Dataset      | [Link](https://www.10xgenomics.com/resources/datasets/human-breast-cancer-ductal-carcinoma-in-situ-invasive-carcinoma-ffpe-1-standard-1-3-0)   |
+| Visium_Mouse_Colon           | Gene Expression Omnibus   | [GSE5213483](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM5213483)                         |
+| Xenium_Human_Colon_Cancer    | 10X Genomics Dataset      | [Link](https://www.10xgenomics.com/datasets/human-colon-preview-data-xenium-human-colon-gene-expression-panel-1-standard)|
 
 These datasets were used to demonstrate the capabilities of IAMSAM in our paper. You can access and download the datasets using the provided links.
 

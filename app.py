@@ -182,7 +182,7 @@ def reset_button_in_everything_mode(n_clicks, alpha):
 
     log('Reset.')
     
-    return fig, [''], blank_fig(), blank_fig(), blank_fig(), blank_fig(), blank_fig(), blank_fig()
+    return fig, [''], blank_fig(), blank_fig(), blank_fig(), blank_fig(), blank_fig()
 
 
 

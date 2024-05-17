@@ -389,7 +389,7 @@ def create_layout(app, flists, config):
                             style={'background-color':'transparent'}
                         )]
                          
-                    )], title = 'Cell type deconvolution')
+                    )], title = 'Cell type proportion')
             ], start_collapsed=True,  always_open=True)
         ]),
 

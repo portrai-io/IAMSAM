@@ -67,10 +67,14 @@ def update_log_messages(n_intervals):
 @app.callback(Output("page-content", "children"), 
               [Input("url", "pathname")])
 def display_page(pathname):
+    
+    mode = "Everything-mode" if pathname != "/prompt" else "Prompt-mode"
+    log(f"Mode changed to: {mode}")
+    
     if pathname == "/prompt":
         return prompt.create_layout(app, flists, config)
     else:
-        return everything.create_layout(app, flists, config),
+        return everything.create_layout(app, flists, config)
 
 
 @app.callback(
@@ -161,16 +165,19 @@ def update_masks_on_resize(scale_factor, selected):
 @app.callback(
     Output("he_image", "figure", allow_duplicate=True),
     Output('mask_list', 'options', allow_duplicate=True),
+    Output('roi-1', 'value'),
+    Output('roi-2', 'value'),
     Output("deg_volcano", "figure", allow_duplicate=True),
     Output("deg_box", "figure", allow_duplicate=True),
     Output("deg_enrich", "figure", allow_duplicate=True),
     Output("deg_enrich2", "figure", allow_duplicate=True),
     Output("deg_celltype", "figure", allow_duplicate=True),
+    Output("box", "children", allow_duplicate=True),  
     Input('reset', 'n_clicks'),
     State("alpha-state", "value"),
     prevent_initial_call=True,
 )
-def reset_button_in_everything_mode(n_clicks, alpha):
+def reset_button(n_clicks, alpha):
     if n_clicks is None:
         raise PreventUpdate
     
@@ -178,11 +185,16 @@ def reset_button_in_everything_mode(n_clicks, alpha):
     fig.update_xaxes(visible=False)
     fig.update_yaxes(visible=False)
     fig.update_layout(margin=dict(l=1, r=1, t=1, b=1))
+
+
+    ps.masks = None
     ps.boxes = []
+    ps.integrated_masks = None
+    ps.deg_df = None
 
     log('Reset.')
     
-    return fig, [''], blank_fig(), blank_fig(), blank_fig(), blank_fig(), blank_fig()
+    return fig, [''], None, None, blank_fig(), blank_fig(), blank_fig(), blank_fig(), blank_fig(), ""
 
 
 
@@ -343,7 +355,8 @@ def run_sam_in_prompt_mode(n_clicks, alpha):
     if n_clicks is None:
         raise PreventUpdate
         
-    if len(ps.boxes) == 0 :        
+    if len(ps.boxes) == 0 :
+        log("Error : There is no box prompt")
         raise PreventUpdate
 
     if not (hasattr(ps, 'adata')):

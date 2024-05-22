@@ -7,7 +7,6 @@ import json
 import mygene
 from dash import Dash, dcc, html
 import dash_bootstrap_components as dbc
-import celltypist
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd

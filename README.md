@@ -5,6 +5,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/portrai-io/IAMSAM)](https://github.com/portrai-io/IAMSAM/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/portrai-io/IAMSAM)](https://github.com/portrai-io/IAMSAM/issues)
 [![GitHub contributors](https://img.shields.io/github/contributors/portrai-io/IAMSAM)](https://github.com/portrai-io/IAMSAM/graphs/contributors)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11142406.svg)](https://doi.org/10.5281/zenodo.11142406)
 
 IAMSAM (Image-based Analysis of Molecular signatures using the Segment-Anything Model) is a user-friendly web-based tool designed to analyze ST data. This repository contains the code and resources to utilize the functionalities of IAMSAM described in [our paper](https://doi.org/10.1101/2023.05.25.542052).
 

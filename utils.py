@@ -264,7 +264,7 @@ def plot_box(In_df, adata, top_n = 10):
     top_df = top_df.merge(adata_roi.obs['ROIs'], how = 'left', left_index=True, right_index=True)
     top_df['ROIs'] = top_df['ROIs'].astype('category')
 
-    fig = px.box(data_frame = top_df.melt(id_vars = 'ROIs'), 
+    fig1 = px.box(data_frame = top_df.melt(id_vars = 'ROIs'), 
                     x = "variable",
                     y = 'value', color = 'ROIs',
                     color_discrete_map={
@@ -273,11 +273,35 @@ def plot_box(In_df, adata, top_n = 10):
                       }, 
                     category_orders={"mask_in" : ['ROI1', 'ROI2']},
                     title = 'Top{} high foldchange DEGs in ROI1 compare to ROI2'.format(top_n))
-    fig.update_layout(legend_title_text = 'Region of Interest')
-    fig.update_xaxes(title_text = 'Gene symbols')
-    fig.update_yaxes(title_text = 'Normalized exp.')
+    fig1.update_layout(legend_title_text = 'Region of Interest')
+    fig1.update_xaxes(title_text = 'Gene symbols')
+    fig1.update_yaxes(title_text = 'Normalized exp.')
+
+
+    top_gene2 = In_df[In_df['DE'] == 'ROI2'].sort_values('logfoldchanges', ascending=False)
+    top_gene2 = top_gene2.head(n=top_n).names
+    top_idx2 = [adata.var_names.tolist().index(x) if x in adata.var_names else None for x in top_gene2]
+    top_df2 = pd.DataFrame(adata_roi.X.todense()[:,top_idx2], columns=top_gene2, index= adata_roi.obs_names)
     
-    return fig   
+    top_df2 = top_df2.merge(adata_roi.obs['ROIs'], how = 'left', left_index=True, right_index=True)
+    top_df2['ROIs'] = top_df2['ROIs'].astype('category')
+
+    fig2 = px.box(data_frame = top_df2.melt(id_vars = 'ROIs'), 
+                    x = "variable",
+                    y = 'value', color = 'ROIs',
+                    color_discrete_map={
+                          'ROI1' : '#542C95', 
+                          'ROI2' : '#764a23'
+                      }, 
+                    category_orders={"mask_in" : ['ROI1', 'ROI2']},
+                    title = 'Top{} high foldchange DEGs in ROI2 compare to ROI1'.format(top_n))
+    fig2.update_layout(legend_title_text = 'Region of Interest')
+    fig2.update_xaxes(title_text = 'Gene symbols')
+    fig2.update_yaxes(title_text = 'Normalized exp.')
+    
+    
+    
+    return fig1, fig2  
 
 
 def do_enrichment_analysis_for_ROI1(In_df, gene_sets, organism, top_n = 10):

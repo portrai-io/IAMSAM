@@ -393,6 +393,7 @@ def run_sam_in_prompt_mode(n_clicks, alpha):
 @app.callback(
     Output("deg_volcano", "figure", allow_duplicate=True),
     Output("deg_box", "figure", allow_duplicate=True),
+    Output("deg_box2", "figure", allow_duplicate=True),
     Output("deg_enrich", "figure", allow_duplicate=True),
     Output("deg_enrich2", "figure", allow_duplicate=True),
     Output("deg_celltype", "figure", allow_duplicate=True),
@@ -423,12 +424,12 @@ def run_downstream_analysis(n_clicks, selected1, selected2, lfc, padj, geneset, 
         
         try:
             fig_volcano = plot_volcano(In_df)
-            fig_box = plot_box(In_df, ps.adata)
+            fig_box1, fig_box2 = plot_box(In_df, ps.adata)
         
         except:
             print("Error in DEG")
             fig_volcano = blank_fig()
-            fig_box = blank_fig()
+            fig_box1, fig_box2 = blank_fig(), blank_fig()
             log('Error occurred in Calculating DEG')
         
         try: 
@@ -449,7 +450,7 @@ def run_downstream_analysis(n_clicks, selected1, selected2, lfc, padj, geneset, 
 
         log("Running Downstream analysis ... Done")
     
-        return fig_volcano, fig_box, fig_enrich1, fig_enrich2, fig_celltype, ''
+        return fig_volcano, fig_box1, fig_box2, fig_enrich1, fig_enrich2, fig_celltype, ''
 
 
 

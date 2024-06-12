@@ -308,7 +308,25 @@ def create_layout(app, flists, config):
                                     fullscreen= False,
                                     style={'background-color':'transparent'}
                                 )
-                        ])
+                        ]),
+                         dbc.Row([
+                            dcc.Loading(
+                                dcc.Graph(
+                                    id="deg_box2",
+                                    figure = blank_fig(),
+                                    style={
+                                            'margin-top': 'auto',
+                                            'margin-bottom': 'auto',
+                                            'margin-left': 'auto',
+                                            'margin-right': 'auto'
+                                    },
+                                ),
+                                id = "loading-deg5",
+                                color= "#542C95",
+                                fullscreen= False,
+                                style={'background-color':'transparent'}
+                            )
+                    ])
                      ], title="Differentially Expressed Genes", id = "accord1"
                 ),
                 dbc.AccordionItem([         

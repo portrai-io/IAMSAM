@@ -137,26 +137,28 @@ def update_dropdown_options(master_values, selected1, selected2):
 )
 def update_masks_on_resize(scale_factor, selected):
     resized_masks = []
-    kernel_size = int(scale_factor * 50)  # Kernel size proportional to the scale factor
-    kernel = np.ones((kernel_size, kernel_size), np.uint8)
-    
-    for mask in ps.masks:
-        if scale_factor > 1:
-            # Apply dilation
-            resized_mask = cv2.dilate(mask, kernel, iterations=1)
-        else:
-            # Apply erosion
-            resized_mask = cv2.erode(mask, kernel, iterations=1)
+
+    if scale_factor == 1:
+        resized_masks = ps.masks_backup.copy()
+    else:
+        kernel_size = int(scale_factor * 50)  # Kernel size proportional to the scale factor
+        kernel = np.ones((kernel_size, kernel_size), np.uint8)
         
-        resized_masks.append(resized_mask)
+        for mask in ps.masks_backup:
+            if scale_factor > 1:
+                # Apply dilation
+                resized_mask = cv2.dilate(mask, kernel, iterations=1)
+            else:
+                # Apply erosion
+                resized_mask = cv2.erode(mask, kernel, iterations=1)
+            
+            resized_masks.append(resized_mask)
     
     ps.masks = resized_masks  # Update global mask list
     
     # Update dropdown options to reflect current masks
     options = [{'label': str(i), 'value': i} for i in range(len(resized_masks))]
  
-    # Ensure selected values are still valid
-    selected = [s for s in selected if s <= len(resized_masks)]
 
     log("Mask size modulated")
     return options, selected

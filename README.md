@@ -7,7 +7,7 @@
 [![GitHub contributors](https://img.shields.io/github/contributors/portrai-io/IAMSAM)](https://github.com/portrai-io/IAMSAM/graphs/contributors)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.12175539.svg)](https://doi.org/10.5281/zenodo.12175539)
 
-IAMSAM (Image-based Analysis of Molecular signatures using the Segment-Anything Model) is a user-friendly web-based tool designed to analyze ST data. This repository contains the code and resources to utilize the functionalities of IAMSAM described in [our paper](https://doi.org/10.1101/2023.05.25.542052).
+IAMSAM (Image-based Analysis of Molecular signatures using the Segment-Anything Model) is a user-friendly web-based tool designed to analyze ST data. This repository contains the code and resources to utilize the functionalities of IAMSAM described in [our paper](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-024-03380-x).
 
 
 ## Features
@@ -80,7 +80,7 @@ The data used in [demo page](https://iamsam.portrai.io).
 These datasets were used to demonstrate the capabilities of IAMSAM in our paper. You can access and download the datasets using the provided links.
 
 ## Citation
-If you find IAMSAM helpful for your work, consider citing [our paper](https://doi.org/10.1101/2023.05.25.542052)
+If you find IAMSAM helpful for your work, consider citing [our paper](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-024-03380-x)
 
 
 ## Contact

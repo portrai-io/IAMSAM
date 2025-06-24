@@ -22,7 +22,7 @@ After selecting ROIs, IAMSAM automatically performs downstream analysis includin
 ## Tutorial Video
 [![Tutorial Video](/assets/title.png)](https://youtu.be/ri1OB4W210Q)
 
-You can try IAMSAM in our [demo page](https://iamsam.portrai.io). If you want to apply IAMSAM to your own data, please follow the instructions below.
+If you want to apply IAMSAM to your own data, please follow the instructions below.
 
 ## Requirements
 
@@ -68,8 +68,7 @@ We provide sample notebooks to preprocess Visium and Xenium data into h5ad forma
 
 
 
-## Demo Data
-The data used in [demo page](https://iamsam.portrai.io).
+## Example Data
 | Sample Name           | Repository                | Download Link                                                                                       |
 |-----------------------|---------------------------|-----------------------------------------------------------------------------------------------------|
 | Visium_FFPE_Human_Breast_Cancer   | 10X Genomics Dataset      | [Link](https://www.10xgenomics.com/resources/datasets/human-breast-cancer-ductal-carcinoma-in-situ-invasive-carcinoma-ffpe-1-standard-1-3-0)   |
